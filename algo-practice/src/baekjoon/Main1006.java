@@ -35,7 +35,7 @@ public class Main1006 {
 					max = a;
 				}
 
-				int b = enemies[i][i] + enemies[i][(i - 1 + section) % section];
+				int b = enemies[i] + enemies[i];
 
 				if (b <= member && b > max) {
 					max = b;
