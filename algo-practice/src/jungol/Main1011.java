@@ -18,7 +18,9 @@ public class Main1011 {
 			numbers[i] = i;
 		}
 
-		for (int n = 2; n <= maxNumber; ++n) {
+		int sqrt = (int) Math.sqrt(maxNumber);
+
+		for (int n = 2; n <= sqrt; ++n) {
 			if (numbers[n] == 0) {
 				continue;
 			}
