@@ -1,6 +1,10 @@
-package com.sds.tech.vo;
+package com.sds.tech.component.vo;
+
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.Session;
 
 public class ServerInfoVO {
+	private String serverId;
 	private String serverName;
 	private String serverIP;
 	private int serverPort;
@@ -8,19 +12,31 @@ public class ServerInfoVO {
 	private String password;
 	private String osType;
 
+	private Session session;
+	private Channel channel;
+
 	public ServerInfoVO() {
-		super();
+
 	}
 
-	public ServerInfoVO(String serverName, String serverIP, int serverPort,
-			String userId, String password, String osType) {
+	public ServerInfoVO(String serverId, String serverName, String serverIP,
+			int serverPort, String userId, String password, String osType) {
 		super();
+		this.serverId = serverId;
 		this.serverName = serverName;
 		this.serverIP = serverIP;
 		this.serverPort = serverPort;
 		this.userId = userId;
 		this.password = password;
 		this.osType = osType;
+	}
+
+	public String getServerId() {
+		return serverId;
+	}
+
+	public void setServerId(String serverId) {
+		this.serverId = serverId;
 	}
 
 	public String getServerName() {
@@ -69,6 +85,22 @@ public class ServerInfoVO {
 
 	public void setOsType(String osType) {
 		this.osType = osType;
+	}
+
+	public Session getSession() {
+		return session;
+	}
+
+	public void setSession(Session session) {
+		this.session = session;
+	}
+
+	public Channel getChannel() {
+		return channel;
+	}
+
+	public void setChannel(Channel channel) {
+		this.channel = channel;
 	}
 
 	@Override

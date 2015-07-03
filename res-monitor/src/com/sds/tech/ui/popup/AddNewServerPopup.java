@@ -1,4 +1,4 @@
-package com.sds.tech.popup;
+package com.sds.tech.ui.popup;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -20,12 +20,12 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
 
-import com.sds.tech.ResourceMonitor;
+import com.sds.tech.ui.ResourceMonitorUI;
 
 public class AddNewServerPopup extends JFrame {
 	private static final long serialVersionUID = 8506499428711180729L;
 
-	private ResourceMonitor parent;
+	private ResourceMonitorUI parent;
 
 	private JTextField serverName;
 	private JTextField serverIP;
@@ -35,7 +35,7 @@ public class AddNewServerPopup extends JFrame {
 	private final ButtonGroup osTypeButtonGroup = new ButtonGroup();
 	private String osType;
 
-	public AddNewServerPopup(ResourceMonitor parent) {
+	public AddNewServerPopup(ResourceMonitorUI parent) {
 		this.parent = parent;
 		initUI();
 	}
@@ -327,6 +327,7 @@ public class AddNewServerPopup extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				resetForm();
 				setVisible(false);
 			}
 		});
@@ -414,11 +415,11 @@ public class AddNewServerPopup extends JFrame {
 		this.osType = osType;
 	}
 
-	public ResourceMonitor getParent() {
+	public ResourceMonitorUI getParent() {
 		return parent;
 	}
 
-	public void setParent(ResourceMonitor parent) {
+	public void setParent(ResourceMonitorUI parent) {
 		this.parent = parent;
 	}
 }

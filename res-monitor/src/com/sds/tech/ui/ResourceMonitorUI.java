@@ -1,16 +1,17 @@
-package com.sds.tech;
+package com.sds.tech.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.EventQueue;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BoxLayout;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -22,18 +23,25 @@ import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
 
-import com.sds.tech.popup.AddNewServerPopup;
-import com.sds.tech.ssh.ConnectionManager;
-import com.sds.tech.vo.ServerInfoVO;
+import com.sds.tech.ServerResourceMonitor;
+import com.sds.tech.component.vo.ServerInfoVO;
+import com.sds.tech.ui.popup.AddNewServerPopup;
+import com.sds.tech.ui.popup.ResultSettingsPopup;
 
-public class ResourceMonitor extends JFrame {
+public class ResourceMonitorUI extends JFrame {
 	private static final long serialVersionUID = -8623816897416048151L;
 
-	private ConnectionManager connectionManager;
-	private static AddNewServerPopup addNewServerPopup;
+	private ServerResourceMonitor srm;
+
+	private AddNewServerPopup addNewServerPopup;
+	private ResultSettingsPopup resultSettingsPopup;
 	private JPanel serverListPanel;
 
-	public ResourceMonitor() {
+	private JLabel statusBar;
+
+	public ResourceMonitorUI(ServerResourceMonitor srm) {
+		this.srm = srm;
+
 		getContentPane().setComponentOrientation(
 				ComponentOrientation.LEFT_TO_RIGHT);
 		setMinimumSize(new Dimension(600, 400));
@@ -43,23 +51,24 @@ public class ResourceMonitor extends JFrame {
 
 		initUI();
 
-		setConnectionManager(new ConnectionManager());
+		this.addNewServerPopup = new AddNewServerPopup(this);
+		this.resultSettingsPopup = new ResultSettingsPopup(this);
 	}
 
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
+	public ServerResourceMonitor getSrm() {
+		return srm;
+	}
 
-			private ResourceMonitor monitor;
+	public void setSrm(ServerResourceMonitor srm) {
+		this.srm = srm;
+	}
 
-			@Override
-			public void run() {
-				monitor = new ResourceMonitor();
-				monitor.setExtendedState(JFrame.MAXIMIZED_BOTH);
-				monitor.setVisible(true);
+	public JLabel getStatusBar() {
+		return statusBar;
+	}
 
-				addNewServerPopup = new AddNewServerPopup(monitor);
-			}
-		});
+	public void setStatusBar(JLabel statusBar) {
+		this.statusBar = statusBar;
 	}
 
 	private void initUI() {
@@ -89,7 +98,6 @@ public class ResourceMonitor extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
 
 			}
 		});
@@ -104,8 +112,7 @@ public class ResourceMonitor extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-
+				resultSettingsPopup.setVisible(true);
 			}
 		});
 
@@ -165,14 +172,38 @@ public class ResourceMonitor extends JFrame {
 				null, null, null));
 
 		JButton btnStartStop = new JButton("Start/Stop");
+		btnStartStop.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				displayMessage("Monitoring Start");
+			}
+		});
 
 		JButton btnGranularity = new JButton("Set Granularity");
+		btnGranularity.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				displayMessage("Set Granularity");
+			}
+		});
 
 		JButton btnSaveImage = new JButton("Save as Image");
-		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
-		buttonPanel.add(btnStartStop);
-		buttonPanel.add(btnGranularity);
-		buttonPanel.add(btnSaveImage);
+		GroupLayout gl_buttonPanel = new GroupLayout(buttonPanel);
+		gl_buttonPanel.setHorizontalGroup(gl_buttonPanel.createParallelGroup(
+				Alignment.LEADING).addGroup(
+				gl_buttonPanel.createSequentialGroup().addContainerGap()
+						.addComponent(btnStartStop).addGap(18)
+						.addComponent(btnGranularity).addGap(18)
+						.addComponent(btnSaveImage).addGap(101)));
+		gl_buttonPanel.setVerticalGroup(gl_buttonPanel.createParallelGroup(
+				Alignment.LEADING).addGroup(
+				gl_buttonPanel.createParallelGroup(Alignment.BASELINE)
+						.addComponent(btnStartStop)
+						.addComponent(btnGranularity)
+						.addComponent(btnSaveImage)));
+		buttonPanel.setLayout(gl_buttonPanel);
 
 		JPanel graphPanel = new JPanel();
 		graphPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
@@ -197,6 +228,30 @@ public class ResourceMonitor extends JFrame {
 
 		JLabel lblMemoryUsage = new JLabel("Memory Usage (%)");
 		memoryUsagePanel.add(lblMemoryUsage, BorderLayout.NORTH);
+
+		JPanel bottomPanel = new JPanel();
+		bottomPanel.setPreferredSize(new Dimension(10, 40));
+		bottomPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
+				null, null, null));
+		getContentPane().add(bottomPanel, BorderLayout.SOUTH);
+
+		statusBar = new JLabel("");
+		GroupLayout gl_bottomPanel = new GroupLayout(bottomPanel);
+		gl_bottomPanel.setHorizontalGroup(gl_bottomPanel.createParallelGroup(
+				Alignment.LEADING).addGroup(
+				Alignment.TRAILING,
+				gl_bottomPanel.createSequentialGroup()
+						.addContainerGap(709, Short.MAX_VALUE)
+						.addComponent(statusBar).addContainerGap()));
+		gl_bottomPanel.setVerticalGroup(gl_bottomPanel.createParallelGroup(
+				Alignment.LEADING).addGroup(
+				gl_bottomPanel
+						.createSequentialGroup()
+						.addContainerGap()
+						.addComponent(statusBar, GroupLayout.DEFAULT_SIZE,
+								GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+						.addGap(9)));
+		bottomPanel.setLayout(gl_bottomPanel);
 	}
 
 	/**
@@ -239,6 +294,9 @@ public class ResourceMonitor extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				JButton btnObj = (JButton) e.getSource();
 				String serverId = btnObj.getToolTipText();
+
+				getSrm().getConnectionManager().disconnect(serverId);
+
 				serverListPanel.remove(btnObj.getParent());
 				serverListPanel.revalidate();
 				serverListPanel.repaint();
@@ -250,17 +308,13 @@ public class ResourceMonitor extends JFrame {
 		serverListPanel.revalidate();
 		serverListPanel.repaint();
 
-		ServerInfoVO newServer = new ServerInfoVO(serverName, serverIP,
-				serverPort, userId, password, osType);
+		ServerInfoVO newServer = new ServerInfoVO(serverId, serverName,
+				serverIP, serverPort, userId, password, osType);
 
-		getConnectionManager().connect(newServer);
+		getSrm().getConnectionManager().connect(newServer);
 	}
 
-	public ConnectionManager getConnectionManager() {
-		return connectionManager;
-	}
-
-	public void setConnectionManager(ConnectionManager connectionManager) {
-		this.connectionManager = connectionManager;
+	private void displayMessage(String message) {
+		getStatusBar().setText(message);
 	}
 }
