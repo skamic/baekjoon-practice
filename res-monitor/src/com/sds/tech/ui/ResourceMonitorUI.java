@@ -23,6 +23,11 @@ import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+
 import com.sds.tech.ServerResourceMonitor;
 import com.sds.tech.component.vo.ServerInfoVO;
 import com.sds.tech.ui.popup.AddNewServerPopup;
@@ -35,8 +40,8 @@ public class ResourceMonitorUI extends JFrame {
 
 	private AddNewServerPopup addNewServerPopup;
 	private ResultSettingsPopup resultSettingsPopup;
-	private JPanel serverListPanel;
 
+	private JPanel serverListPanel;
 	private JLabel statusBar;
 
 	public ResourceMonitorUI(ServerResourceMonitor srm) {
@@ -124,26 +129,45 @@ public class ResourceMonitorUI extends JFrame {
 		setJMenuBar(menuBar);
 	}
 
+	/**
+	 * 
+	 */
 	private void createLayout() {
+		getContentPane().add(createLeftPanel(), BorderLayout.WEST);
+		getContentPane().add(createRightPanel(), BorderLayout.CENTER);
+		getContentPane().add(createBottomPanel(), BorderLayout.SOUTH);
+	}
 
+	/**
+	 * @return
+	 */
+	private JPanel createLeftPanel() {
 		JPanel leftPanel = new JPanel();
 		leftPanel.setPreferredSize(new Dimension(300, 10));
 		leftPanel.setAutoscrolls(true);
 		leftPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
-		getContentPane().add(leftPanel, BorderLayout.WEST);
 		leftPanel.setLayout(new BorderLayout(2, 2));
 
 		JLabel lblServerList = new JLabel("Server List");
 		leftPanel.add(lblServerList, BorderLayout.NORTH);
 
+		createLeftServerListPanel();
+		leftPanel.add(serverListPanel, BorderLayout.CENTER);
+
+		return leftPanel;
+	}
+
+	/**
+	 * 
+	 */
+	private void createLeftServerListPanel() {
 		serverListPanel = new JPanel();
 		serverListPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		serverListPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 		serverListPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED,
 				null, null, null, null));
 		serverListPanel.setAutoscrolls(true);
-		leftPanel.add(serverListPanel, BorderLayout.CENTER);
 		serverListPanel.setLayout(new BoxLayout(serverListPanel,
 				BoxLayout.Y_AXIS));
 
@@ -156,18 +180,31 @@ public class ResourceMonitorUI extends JFrame {
 			}
 		});
 		serverListPanel.add(btnAddServer);
+	}
 
+	/**
+	 * @return
+	 */
+	private JPanel createRightPanel() {
 		JPanel rightPanel = new JPanel();
 		rightPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
 		rightPanel.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 		rightPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
-		getContentPane().add(rightPanel, BorderLayout.CENTER);
 		rightPanel.setLayout(new BorderLayout(0, 0));
+		rightPanel.add(createRightButtonPanel(), BorderLayout.NORTH);
+		rightPanel.add(createRightGraphPanel(), BorderLayout.CENTER);
 
+		return rightPanel;
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
+	private JPanel createRightButtonPanel() {
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
-		rightPanel.add(buttonPanel, BorderLayout.NORTH);
 		buttonPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
 
@@ -205,10 +242,16 @@ public class ResourceMonitorUI extends JFrame {
 						.addComponent(btnSaveImage)));
 		buttonPanel.setLayout(gl_buttonPanel);
 
+		return buttonPanel;
+	}
+
+	/**
+	 * @return
+	 */
+	private JPanel createRightGraphPanel() {
 		JPanel graphPanel = new JPanel();
 		graphPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
-		rightPanel.add(graphPanel, BorderLayout.CENTER);
 		graphPanel.setLayout(new GridLayout(0, 1, 2, 2));
 
 		JPanel cpuUsagePanel = new JPanel();
@@ -220,6 +263,15 @@ public class ResourceMonitorUI extends JFrame {
 		JLabel lblCpuUsage = new JLabel("CPU Usage (%)");
 		cpuUsagePanel.add(lblCpuUsage, BorderLayout.NORTH);
 
+		JFreeChart cpuChart = ChartFactory.createXYLineChart(null,
+				"Elapsed Time (s)", "CPU Usage (%)", null,
+				PlotOrientation.VERTICAL, true, true, false);
+		ChartPanel cpuChartPanel = new ChartPanel(cpuChart);
+		cpuChartPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
+				null, null, null));
+
+		cpuUsagePanel.add(cpuChartPanel);
+
 		JPanel memoryUsagePanel = new JPanel();
 		graphPanel.add(memoryUsagePanel);
 		memoryUsagePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED,
@@ -229,11 +281,26 @@ public class ResourceMonitorUI extends JFrame {
 		JLabel lblMemoryUsage = new JLabel("Memory Usage (%)");
 		memoryUsagePanel.add(lblMemoryUsage, BorderLayout.NORTH);
 
+		JFreeChart memoryChart = ChartFactory.createXYLineChart(null,
+				"Elapsed Time (s)", "Memory Usage (%)", null,
+				PlotOrientation.VERTICAL, true, true, false);
+		ChartPanel memoryChartPanel = new ChartPanel(memoryChart);
+		memoryChartPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED,
+				null, null, null, null));
+
+		memoryUsagePanel.add(memoryChartPanel);
+
+		return graphPanel;
+	}
+
+	/**
+	 * @return
+	 */
+	private JPanel createBottomPanel() {
 		JPanel bottomPanel = new JPanel();
 		bottomPanel.setPreferredSize(new Dimension(10, 40));
 		bottomPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
-		getContentPane().add(bottomPanel, BorderLayout.SOUTH);
 
 		statusBar = new JLabel("");
 		GroupLayout gl_bottomPanel = new GroupLayout(bottomPanel);
@@ -252,6 +319,8 @@ public class ResourceMonitorUI extends JFrame {
 								GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
 						.addGap(9)));
 		bottomPanel.setLayout(gl_bottomPanel);
+
+		return bottomPanel;
 	}
 
 	/**
@@ -293,9 +362,8 @@ public class ResourceMonitorUI extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JButton btnObj = (JButton) e.getSource();
-				String serverId = btnObj.getToolTipText();
 
-				getSrm().getConnectionManager().disconnect(serverId);
+				getSrm().removeServer(btnObj.getToolTipText());
 
 				serverListPanel.remove(btnObj.getParent());
 				serverListPanel.revalidate();
@@ -308,10 +376,10 @@ public class ResourceMonitorUI extends JFrame {
 		serverListPanel.revalidate();
 		serverListPanel.repaint();
 
-		ServerInfoVO newServer = new ServerInfoVO(serverId, serverName,
+		ServerInfoVO serverInfo = new ServerInfoVO(serverId, serverName,
 				serverIP, serverPort, userId, password, osType);
 
-		getSrm().getConnectionManager().connect(newServer);
+		getSrm().addServer(serverInfo);
 	}
 
 	private void displayMessage(String message) {
