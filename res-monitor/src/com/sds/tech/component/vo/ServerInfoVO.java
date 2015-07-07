@@ -20,7 +20,7 @@ public class ServerInfoVO {
 	}
 
 	public ServerInfoVO(String serverId, String serverName, String serverIP,
-			int serverPort, String userId, String password, String osType) {
+			int serverPort, String userId, String password) {
 		super();
 		this.serverId = serverId;
 		this.serverName = serverName;
@@ -28,7 +28,6 @@ public class ServerInfoVO {
 		this.serverPort = serverPort;
 		this.userId = userId;
 		this.password = password;
-		this.osType = osType;
 	}
 
 	public String getServerId() {

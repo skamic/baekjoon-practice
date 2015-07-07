@@ -1,17 +1,15 @@
 package com.sds.tech.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BoxLayout;
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -23,12 +21,17 @@ import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
 
+import net.miginfocom.swing.MigLayout;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
 
 import com.sds.tech.ServerResourceMonitor;
+import com.sds.tech.component.ConnectionManager;
 import com.sds.tech.component.vo.ServerInfoVO;
 import com.sds.tech.ui.popup.AddNewServerPopup;
 import com.sds.tech.ui.popup.ResultSettingsPopup;
@@ -44,7 +47,11 @@ public class ResourceMonitorUI extends JFrame {
 	private JPanel serverListPanel;
 	private JLabel statusBar;
 
+	private JPanel cpuUsagePanel;
+	private JPanel memoryUsagePanel;
+
 	public ResourceMonitorUI(ServerResourceMonitor srm) {
+		getContentPane().setName("");
 		this.srm = srm;
 
 		getContentPane().setComponentOrientation(
@@ -74,6 +81,22 @@ public class ResourceMonitorUI extends JFrame {
 
 	public void setStatusBar(JLabel statusBar) {
 		this.statusBar = statusBar;
+	}
+
+	public JPanel getCpuUsagePanel() {
+		return cpuUsagePanel;
+	}
+
+	public void setCpuUsagePanel(JPanel cpuUsagePanel) {
+		this.cpuUsagePanel = cpuUsagePanel;
+	}
+
+	public JPanel getMemoryUsagePanel() {
+		return memoryUsagePanel;
+	}
+
+	public void setMemoryUsagePanel(JPanel memoryUsagePanel) {
+		this.memoryUsagePanel = memoryUsagePanel;
 	}
 
 	private void initUI() {
@@ -168,8 +191,6 @@ public class ResourceMonitorUI extends JFrame {
 		serverListPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED,
 				null, null, null, null));
 		serverListPanel.setAutoscrolls(true);
-		serverListPanel.setLayout(new BoxLayout(serverListPanel,
-				BoxLayout.Y_AXIS));
 
 		JButton btnAddServer = new JButton("Add New Server");
 		btnAddServer.addActionListener(new ActionListener() {
@@ -179,7 +200,8 @@ public class ResourceMonitorUI extends JFrame {
 				addNewServerPopup.setVisible(true);
 			}
 		});
-		serverListPanel.add(btnAddServer);
+		serverListPanel.setLayout(new MigLayout("", "[fill]", "[top]"));
+		serverListPanel.add(btnAddServer, "cell 0 0,grow");
 	}
 
 	/**
@@ -192,6 +214,7 @@ public class ResourceMonitorUI extends JFrame {
 		rightPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
 		rightPanel.setLayout(new BorderLayout(0, 0));
+
 		rightPanel.add(createRightButtonPanel(), BorderLayout.NORTH);
 		rightPanel.add(createRightGraphPanel(), BorderLayout.CENTER);
 
@@ -207,13 +230,26 @@ public class ResourceMonitorUI extends JFrame {
 		buttonPanel.setAlignmentX(Component.RIGHT_ALIGNMENT);
 		buttonPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
+		buttonPanel
+				.setLayout(new MigLayout("", "[fill][fill][fill]", "[fill]"));
 
-		JButton btnStartStop = new JButton("Start/Stop");
+		JButton btnStartStop = new JButton("Start Monitoring");
 		btnStartStop.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				displayMessage("Monitoring Start");
+				JButton source = (JButton) e.getSource();
+				ConnectionManager connectionManager = getSrm()
+						.getConnectionManager();
+				boolean isStarted = connectionManager.isStarted();
+
+				if (isStarted) {
+					connectionManager.setStarted(false);
+					source.setText("Start Monitoring");
+				} else {
+					connectionManager.setStarted(true);
+					source.setText("Stop Monitoring");
+				}
 			}
 		});
 
@@ -227,20 +263,22 @@ public class ResourceMonitorUI extends JFrame {
 		});
 
 		JButton btnSaveImage = new JButton("Save as Image");
-		GroupLayout gl_buttonPanel = new GroupLayout(buttonPanel);
-		gl_buttonPanel.setHorizontalGroup(gl_buttonPanel.createParallelGroup(
-				Alignment.LEADING).addGroup(
-				gl_buttonPanel.createSequentialGroup().addContainerGap()
-						.addComponent(btnStartStop).addGap(18)
-						.addComponent(btnGranularity).addGap(18)
-						.addComponent(btnSaveImage).addGap(101)));
-		gl_buttonPanel.setVerticalGroup(gl_buttonPanel.createParallelGroup(
-				Alignment.LEADING).addGroup(
-				gl_buttonPanel.createParallelGroup(Alignment.BASELINE)
-						.addComponent(btnStartStop)
-						.addComponent(btnGranularity)
-						.addComponent(btnSaveImage)));
-		buttonPanel.setLayout(gl_buttonPanel);
+		btnSaveImage.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				getSrm().getCpuGraphManager().saveGraphAsImage(
+						getCpuUsagePanel(), "cpu");
+				getSrm().getMemoryGraphManager().saveGraphAsImage(
+						getMemoryUsagePanel(), "memory");
+
+				displayMessage("CPU and Memory Graphs have successfully saved.");
+			}
+		});
+
+		buttonPanel.add(btnStartStop, "cell 0 0,grow");
+		buttonPanel.add(btnGranularity, "cell 1 0,grow");
+		buttonPanel.add(btnSaveImage, "cell 2 0,grow");
 
 		return buttonPanel;
 	}
@@ -250,47 +288,73 @@ public class ResourceMonitorUI extends JFrame {
 	 */
 	private JPanel createRightGraphPanel() {
 		JPanel graphPanel = new JPanel();
+
 		graphPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
-		graphPanel.setLayout(new GridLayout(0, 1, 2, 2));
+		graphPanel.setLayout(new MigLayout("", "[fill]", "[fill][fill]"));
 
-		JPanel cpuUsagePanel = new JPanel();
-		graphPanel.add(cpuUsagePanel);
-		cpuUsagePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
-				null, null, null));
-		cpuUsagePanel.setLayout(new BorderLayout(2, 2));
+		createCpuUsagePanel();
+		createMemoryUsagePanel();
+
+		graphPanel.add(cpuUsagePanel, "cell 0 0,grow");
+		graphPanel.add(memoryUsagePanel, "cell 0 1,grow");
+
+		return graphPanel;
+	}
+
+	/**
+	 * 
+	 */
+	private void createCpuUsagePanel() {
+		cpuUsagePanel = new JPanel();
+		cpuUsagePanel.setLayout(new MigLayout("", "[fill]", "[top][fill]"));
 
 		JLabel lblCpuUsage = new JLabel("CPU Usage (%)");
-		cpuUsagePanel.add(lblCpuUsage, BorderLayout.NORTH);
+		cpuUsagePanel.add(lblCpuUsage, "cell 0 0,grow");
 
-		JFreeChart cpuChart = ChartFactory.createXYLineChart(null,
-				"Elapsed Time (s)", "CPU Usage (%)", null,
-				PlotOrientation.VERTICAL, true, true, false);
+		JFreeChart cpuChart = ChartFactory.createTimeSeriesChart(null,
+				"Elapsed Time (s)", "CPU Usage (%)", null, true, true, false);
+
+		final XYPlot plot = cpuChart.getXYPlot();
+
+		plot.setBackgroundPaint(new Color(0xffffe0));
+		plot.setDomainGridlinesVisible(true);
+		plot.setDomainGridlinePaint(Color.lightGray);
+		plot.setRangeGridlinesVisible(true);
+		plot.setRangeGridlinePaint(Color.lightGray);
+
+		ValueAxis xaxis = plot.getDomainAxis();
+		xaxis.setAutoRange(true);
+
 		ChartPanel cpuChartPanel = new ChartPanel(cpuChart);
+		cpuChartPanel.setHorizontalAxisTrace(true);
 		cpuChartPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
+		cpuChartPanel.setLayout(new MigLayout("", "[]", "[]"));
 
-		cpuUsagePanel.add(cpuChartPanel);
+		cpuUsagePanel.add(cpuChartPanel, "cell 0 1,grow");
+	}
 
-		JPanel memoryUsagePanel = new JPanel();
-		graphPanel.add(memoryUsagePanel);
-		memoryUsagePanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED,
-				null, null, null, null));
-		memoryUsagePanel.setLayout(new BorderLayout(2, 2));
+	/**
+	 * 
+	 */
+	private void createMemoryUsagePanel() {
+		memoryUsagePanel = new JPanel();
+		memoryUsagePanel.setLayout(new MigLayout("", "[fill]", "[top][fill]"));
 
 		JLabel lblMemoryUsage = new JLabel("Memory Usage (%)");
-		memoryUsagePanel.add(lblMemoryUsage, BorderLayout.NORTH);
+		memoryUsagePanel.add(lblMemoryUsage, "cell 0 0,grow");
 
 		JFreeChart memoryChart = ChartFactory.createXYLineChart(null,
 				"Elapsed Time (s)", "Memory Usage (%)", null,
 				PlotOrientation.VERTICAL, true, true, false);
 		ChartPanel memoryChartPanel = new ChartPanel(memoryChart);
+		memoryChartPanel.setHorizontalAxisTrace(true);
 		memoryChartPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED,
 				null, null, null, null));
+		memoryChartPanel.setLayout(new MigLayout("", "[]", "[]"));
 
-		memoryUsagePanel.add(memoryChartPanel);
-
-		return graphPanel;
+		memoryUsagePanel.add(memoryChartPanel, "cell 0 1,grow");
 	}
 
 	/**
@@ -298,27 +362,14 @@ public class ResourceMonitorUI extends JFrame {
 	 */
 	private JPanel createBottomPanel() {
 		JPanel bottomPanel = new JPanel();
+		bottomPanel.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
 		bottomPanel.setPreferredSize(new Dimension(10, 40));
 		bottomPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
+		bottomPanel.setLayout(new MigLayout("", "[fill]", "[15px]"));
 
 		statusBar = new JLabel("");
-		GroupLayout gl_bottomPanel = new GroupLayout(bottomPanel);
-		gl_bottomPanel.setHorizontalGroup(gl_bottomPanel.createParallelGroup(
-				Alignment.LEADING).addGroup(
-				Alignment.TRAILING,
-				gl_bottomPanel.createSequentialGroup()
-						.addContainerGap(709, Short.MAX_VALUE)
-						.addComponent(statusBar).addContainerGap()));
-		gl_bottomPanel.setVerticalGroup(gl_bottomPanel.createParallelGroup(
-				Alignment.LEADING).addGroup(
-				gl_bottomPanel
-						.createSequentialGroup()
-						.addContainerGap()
-						.addComponent(statusBar, GroupLayout.DEFAULT_SIZE,
-								GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-						.addGap(9)));
-		bottomPanel.setLayout(gl_bottomPanel);
+		bottomPanel.add(statusBar, "cell 0 0,grow");
 
 		return bottomPanel;
 	}
@@ -330,10 +381,9 @@ public class ResourceMonitorUI extends JFrame {
 	 * @param serverPort
 	 * @param userId
 	 * @param password
-	 * @param osType
 	 */
 	public void addNewServer(String serverName, String serverIP,
-			int serverPort, String userId, String password, String osType) {
+			int serverPort, String userId, String password) {
 		StringBuffer sb = new StringBuffer();
 		String serverId = sb.append(serverIP).append(":").append(serverPort)
 				.toString();
@@ -377,12 +427,12 @@ public class ResourceMonitorUI extends JFrame {
 		serverListPanel.repaint();
 
 		ServerInfoVO serverInfo = new ServerInfoVO(serverId, serverName,
-				serverIP, serverPort, userId, password, osType);
+				serverIP, serverPort, userId, password);
 
 		getSrm().addServer(serverInfo);
 	}
 
-	private void displayMessage(String message) {
+	public void displayMessage(String message) {
 		getStatusBar().setText(message);
 	}
 }

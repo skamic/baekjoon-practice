@@ -19,6 +19,8 @@ public class ConnectionManager {
 
 	private Map<String, ServerInfoVO> serverInfoList;
 
+	private boolean isStarted = false;
+
 	public ConnectionManager(ServerResourceMonitor srm) {
 		this.srm = srm;
 
@@ -46,6 +48,14 @@ public class ConnectionManager {
 		return serverInfoList;
 	}
 
+	public boolean isStarted() {
+		return isStarted;
+	}
+
+	public void setStarted(boolean isStarted) {
+		this.isStarted = isStarted;
+	}
+
 	public void connect(ServerInfoVO newServer) {
 		try {
 			final String password = newServer.getPassword();
@@ -53,10 +63,8 @@ public class ConnectionManager {
 					newServer.getServerIP(), newServer.getServerPort());
 
 			session.setUserInfo(new UserInfo() {
-
 				@Override
 				public void showMessage(String arg0) {
-					// TODO Auto-generated method stub
 
 				}
 
@@ -89,7 +97,7 @@ public class ConnectionManager {
 			session.connect();
 
 			Channel channel = session.openChannel("exec");
-			((ChannelExec) channel).setCommand("uname -a");
+			((ChannelExec) channel).setCommand("uname");
 
 			channel.setInputStream(null);
 			((ChannelExec) channel).setErrStream(System.err);
@@ -112,7 +120,6 @@ public class ConnectionManager {
 			 * channel.disconnect(); session.disconnect();
 			 */
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
