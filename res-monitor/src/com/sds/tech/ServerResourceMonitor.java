@@ -5,7 +5,7 @@ import java.awt.EventQueue;
 import javax.swing.JFrame;
 
 import com.sds.tech.component.ConnectionManager;
-import com.sds.tech.component.DataLoggingManager;
+import com.sds.tech.component.DataAccessManager;
 import com.sds.tech.component.GraphManager;
 import com.sds.tech.component.vo.ServerInfoVO;
 import com.sds.tech.ui.ResourceMonitorUI;
@@ -16,7 +16,7 @@ public class ServerResourceMonitor {
 	private ConnectionManager connectionManager;
 	private GraphManager cpuGraphManager;
 	private GraphManager memoryGraphManager;
-	private DataLoggingManager dataLoggingManager;
+	private DataAccessManager dataLoggingManager;
 
 	public ServerResourceMonitor() {
 		this.mainUI = new ResourceMonitorUI(this);
@@ -24,7 +24,7 @@ public class ServerResourceMonitor {
 		this.connectionManager = new ConnectionManager(this);
 		this.cpuGraphManager = new GraphManager(this);
 		this.memoryGraphManager = new GraphManager(this);
-		this.dataLoggingManager = new DataLoggingManager(this);
+		this.dataLoggingManager = new DataAccessManager(this);
 	}
 
 	public static void main(String[] args) {
@@ -65,11 +65,11 @@ public class ServerResourceMonitor {
 		this.memoryGraphManager = memoryGraphManager;
 	}
 
-	public DataLoggingManager getDataLoggingManager() {
+	public DataAccessManager getDataLoggingManager() {
 		return dataLoggingManager;
 	}
 
-	public void setDataLoggingManager(DataLoggingManager dataLoggingManager) {
+	public void setDataLoggingManager(DataAccessManager dataLoggingManager) {
 		this.dataLoggingManager = dataLoggingManager;
 	}
 

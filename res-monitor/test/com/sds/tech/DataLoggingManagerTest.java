@@ -6,7 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.sds.tech.component.ConnectionManager;
-import com.sds.tech.component.DataLoggingManager;
+import com.sds.tech.component.DataAccessManager;
 import com.sds.tech.component.vo.ServerInfoVO;
 
 public class DataLoggingManagerTest {
@@ -19,7 +19,7 @@ public class DataLoggingManagerTest {
 
 	// @Test
 	public void createTableTest() throws Exception {
-		DataLoggingManager dataLoggingManager = this.srm
+		DataAccessManager dataLoggingManager = this.srm
 				.getDataLoggingManager();
 
 		dataLoggingManager.createTable();
@@ -27,7 +27,7 @@ public class DataLoggingManagerTest {
 
 	// @Test
 	public void insertDataTest() throws Exception {
-		DataLoggingManager dataLoggingManager = this.srm
+		DataAccessManager dataLoggingManager = this.srm
 				.getDataLoggingManager();
 
 		dataLoggingManager.insertData(1, "WEB_1", "cpu", 4);
@@ -40,7 +40,7 @@ public class DataLoggingManagerTest {
 	@Test
 	public void selectDataTest() {
 		ConnectionManager connectionManager = this.srm.getConnectionManager();
-		DataLoggingManager dataLoggingManager = this.srm
+		DataAccessManager dataLoggingManager = this.srm
 				.getDataLoggingManager();
 		Map<String, ServerInfoVO> serverInfoList = connectionManager
 				.getServerInfoList();

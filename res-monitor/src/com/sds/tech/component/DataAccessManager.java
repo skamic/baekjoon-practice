@@ -14,7 +14,7 @@ import java.util.Map;
 import com.sds.tech.ServerResourceMonitor;
 import com.sds.tech.component.vo.ServerInfoVO;
 
-public class DataLoggingManager {
+public class DataAccessManager {
 	private static final String INSERT_SQL = "insert into resource_usage (seq, server_name, type, percent) values (?, ?, ?, ?)";
 
 	private ServerResourceMonitor srm;
@@ -22,7 +22,7 @@ public class DataLoggingManager {
 	private String resultName = "result";
 	private String resultDirectoryPath = "c:\\Temp";
 
-	public DataLoggingManager(ServerResourceMonitor srm) {
+	public DataAccessManager(ServerResourceMonitor srm) {
 		this.setSrm(srm);
 	}
 
