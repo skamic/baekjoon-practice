@@ -24,6 +24,11 @@ public class ServerConnector {
 	private ResourceCollector cpuUsageCollector;
 	private ResourceCollector memoryUsageCollector;
 
+	public static final String OS_AIX = "AIX";
+	public static final String OS_HPUX = "HP-UX";
+	public static final String OS_LINUX = "Linux";
+	public static final String OS_SOLARIS = "SunOS";
+
 	public ServerConnector() {
 		sch = new JSch();
 	}
@@ -228,7 +233,7 @@ public class ServerConnector {
 					break;
 				}
 			}
-			
+
 			channel.disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();

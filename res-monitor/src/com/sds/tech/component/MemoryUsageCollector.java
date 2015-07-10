@@ -43,7 +43,7 @@ public class MemoryUsageCollector implements ResourceCollector {
 	}
 
 	@Override
-	public void insertData(int percent) {
+	public void insertData(String result) {
 		// TODO Auto-generated method stub
 
 	}

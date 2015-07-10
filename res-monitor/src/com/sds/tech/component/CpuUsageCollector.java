@@ -3,6 +3,7 @@ package com.sds.tech.component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.StringTokenizer;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
@@ -82,7 +83,7 @@ public class CpuUsageCollector implements ResourceCollector {
 						break;
 					}
 
-					System.out.print(new String(tmp, 0, i));
+					insertData(new String(tmp, 0, i));
 				}
 
 				Thread.sleep(5000);
@@ -99,8 +100,26 @@ public class CpuUsageCollector implements ResourceCollector {
 	}
 
 	@Override
-	public void insertData(int percent) {
+	public void insertData(String result) {
 		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
+		int percent = 100;
+		StringTokenizer tokenizer = new StringTokenizer(result, " ");
+		String[] token = new String[tokenizer.countTokens()];
+		int index = 0;
+
+		while (tokenizer.hasMoreTokens()) {
+			token[index++] = tokenizer.nextToken();
+		}
+
+		if (ServerConnector.OS_AIX.equals(osType)) {
+			percent -= Integer.parseInt(token[token.length - 2]);
+		} else if (ServerConnector.OS_HPUX.equals(osType)) {
+			percent -= Integer.parseInt(token[token.length - 1]);
+		} else if (ServerConnector.OS_LINUX.equals(osType)) {
+			percent -= Integer.parseInt(token[token.length - 3]);
+		} else if (ServerConnector.OS_SOLARIS.equals(osType)) {
+			percent -= Integer.parseInt(token[token.length - 1]);
+		}
 
 		dataAccessManager.insertData(seq++, serverName, RESOURCE_TYPE, percent);
 	}
