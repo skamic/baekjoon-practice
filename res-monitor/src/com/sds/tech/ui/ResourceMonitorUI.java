@@ -8,10 +8,12 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -20,6 +22,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -31,8 +34,9 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 
 import com.sds.tech.ServerResourceMonitor;
-import com.sds.tech.component.ConnectionManager;
-import com.sds.tech.component.vo.ServerInfoVO;
+import com.sds.tech.component.DataAccessManager;
+import com.sds.tech.component.GraphManager;
+import com.sds.tech.component.ServerConnector;
 import com.sds.tech.ui.popup.AddNewServerPopup;
 import com.sds.tech.ui.popup.ResultSettingsPopup;
 
@@ -46,9 +50,6 @@ public class ResourceMonitorUI extends JFrame {
 
 	private JPanel serverListPanel;
 	private JLabel statusBar;
-
-	private JPanel cpuUsagePanel;
-	private JPanel memoryUsagePanel;
 
 	public ResourceMonitorUI(ServerResourceMonitor srm) {
 		getContentPane().setName("");
@@ -83,22 +84,6 @@ public class ResourceMonitorUI extends JFrame {
 		this.statusBar = statusBar;
 	}
 
-	public JPanel getCpuUsagePanel() {
-		return cpuUsagePanel;
-	}
-
-	public void setCpuUsagePanel(JPanel cpuUsagePanel) {
-		this.cpuUsagePanel = cpuUsagePanel;
-	}
-
-	public JPanel getMemoryUsagePanel() {
-		return memoryUsagePanel;
-	}
-
-	public void setMemoryUsagePanel(JPanel memoryUsagePanel) {
-		this.memoryUsagePanel = memoryUsagePanel;
-	}
-
 	private void initUI() {
 		setTitle("System Resource Monitor");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -111,13 +96,31 @@ public class ResourceMonitorUI extends JFrame {
 		JMenuBar menuBar = new JMenuBar();
 
 		JMenu fileMenu = new JMenu("File");
+		final JFileChooser fileChooser = new JFileChooser();
+		FileNameExtensionFilter fileFilter = new FileNameExtensionFilter(
+				"*.sl(Server List File)", "sl");
+		fileChooser.setFileFilter(fileFilter);
 
 		JMenuItem loadServerListMenuItem = new JMenuItem("Load Server List");
 		loadServerListMenuItem.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
+				int result = fileChooser.showOpenDialog(null);
 
+				if (result == JFileChooser.APPROVE_OPTION) {
+					File serverListFile = fileChooser.getSelectedFile();
+					String fileName = serverListFile.getName();
+					String extension = fileName.substring(
+							fileName.lastIndexOf(".") + 1, fileName.length());
+
+					if (DataAccessManager.SERVER_LIST_FILE_EXTENSION
+							.equals(extension)) {
+						getSrm().loadServerList(serverListFile);
+					} else {
+						// TODO alert popup
+					}
+				}
 			}
 		});
 
@@ -126,7 +129,13 @@ public class ResourceMonitorUI extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				int result = fileChooser.showSaveDialog(null);
 
+				if (result == JFileChooser.APPROVE_OPTION) {
+					File serverListFile = fileChooser.getSelectedFile();
+
+					getSrm().saveServerList(serverListFile);
+				}
 			}
 		});
 
@@ -200,8 +209,9 @@ public class ResourceMonitorUI extends JFrame {
 				addNewServerPopup.setVisible(true);
 			}
 		});
-		serverListPanel.setLayout(new MigLayout("", "[fill]", "[top]"));
-		serverListPanel.add(btnAddServer, "cell 0 0,grow");
+		serverListPanel.setLayout(new MigLayout("", "[left]", "[top][]"));
+		serverListPanel.add(btnAddServer, "cell 0 0,alignx left,growy,wrap");
+
 	}
 
 	/**
@@ -239,15 +249,12 @@ public class ResourceMonitorUI extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JButton source = (JButton) e.getSource();
-				ConnectionManager connectionManager = getSrm()
-						.getConnectionManager();
-				boolean isStarted = connectionManager.isStarted();
 
-				if (isStarted) {
-					connectionManager.setStarted(false);
+				if (getSrm().isStarted()) {
+					getSrm().stopMonitoring();
 					source.setText("Start Monitoring");
 				} else {
-					connectionManager.setStarted(true);
+					getSrm().startMonitoring();
 					source.setText("Stop Monitoring");
 				}
 			}
@@ -267,10 +274,7 @@ public class ResourceMonitorUI extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				getSrm().getCpuGraphManager().saveGraphAsImage(
-						getCpuUsagePanel(), "cpu");
-				getSrm().getMemoryGraphManager().saveGraphAsImage(
-						getMemoryUsagePanel(), "memory");
+				getSrm().saveGraphAsImage();
 
 				displayMessage("CPU and Memory Graphs have successfully saved.");
 			}
@@ -287,26 +291,33 @@ public class ResourceMonitorUI extends JFrame {
 	 * @return
 	 */
 	private JPanel createRightGraphPanel() {
+		GraphManager cpuGraphManager = getSrm().getCpuGraphManager();
+		GraphManager memoryGraphManager = getSrm().getMemoryGraphManager();
 		JPanel graphPanel = new JPanel();
 
 		graphPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
 		graphPanel.setLayout(new MigLayout("", "[fill]", "[fill][fill]"));
 
-		createCpuUsagePanel();
-		createMemoryUsagePanel();
+		JPanel cpuUsagePanel = createCpuUsagePanel();
+		JPanel memoryUsagePanel = createMemoryUsagePanel();
 
 		graphPanel.add(cpuUsagePanel, "cell 0 0,grow");
 		graphPanel.add(memoryUsagePanel, "cell 0 1,grow");
+
+		cpuGraphManager.setGraph(cpuUsagePanel);
+		memoryGraphManager.setGraph(memoryUsagePanel);
 
 		return graphPanel;
 	}
 
 	/**
+	 * @return
 	 * 
 	 */
-	private void createCpuUsagePanel() {
-		cpuUsagePanel = new JPanel();
+	private JPanel createCpuUsagePanel() {
+		JPanel cpuUsagePanel = new JPanel();
+
 		cpuUsagePanel.setLayout(new MigLayout("", "[fill]", "[top][fill]"));
 
 		JLabel lblCpuUsage = new JLabel("CPU Usage (%)");
@@ -333,13 +344,17 @@ public class ResourceMonitorUI extends JFrame {
 		cpuChartPanel.setLayout(new MigLayout("", "[]", "[]"));
 
 		cpuUsagePanel.add(cpuChartPanel, "cell 0 1,grow");
+
+		return cpuUsagePanel;
 	}
 
 	/**
+	 * @return
 	 * 
 	 */
-	private void createMemoryUsagePanel() {
-		memoryUsagePanel = new JPanel();
+	private JPanel createMemoryUsagePanel() {
+		JPanel memoryUsagePanel = new JPanel();
+
 		memoryUsagePanel.setLayout(new MigLayout("", "[fill]", "[top][fill]"));
 
 		JLabel lblMemoryUsage = new JLabel("Memory Usage (%)");
@@ -355,6 +370,8 @@ public class ResourceMonitorUI extends JFrame {
 		memoryChartPanel.setLayout(new MigLayout("", "[]", "[]"));
 
 		memoryUsagePanel.add(memoryChartPanel, "cell 0 1,grow");
+
+		return memoryUsagePanel;
 	}
 
 	/**
@@ -382,22 +399,33 @@ public class ResourceMonitorUI extends JFrame {
 	 * @param userId
 	 * @param password
 	 */
-	public void addNewServer(String serverName, String serverIP,
-			int serverPort, String userId, String password) {
+	public void addServer(ServerConnector server) {
 		StringBuffer sb = new StringBuffer();
-		String serverId = sb.append(serverIP).append(":").append(serverPort)
-				.toString();
+		String serverId = server.getServerId();
 
-		sb.delete(0, sb.length());
-		sb.append(serverName).append("\n(").append(serverId).append(")");
+		sb.append(server.getServerName()).append("\n(").append(serverId)
+				.append(")");
 
+		serverListPanel.add(createServerItemPanel(sb.toString(), serverId),
+				"wrap");
+		serverListPanel.revalidate();
+		serverListPanel.repaint();
+	}
+
+	/**
+	 * @param serverName
+	 * @param serverId
+	 * @return
+	 */
+	private JPanel createServerItemPanel(String serverName, String serverId) {
 		JPanel serverItemPanel = new JPanel();
+
 		serverItemPanel.setLayout(new BoxLayout(serverItemPanel,
 				BoxLayout.X_AXIS));
 		serverItemPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		serverItemPanel.setVisible(true);
 
-		JCheckBox chckbxServerName = new JCheckBox(sb.toString());
+		JCheckBox chckbxServerName = new JCheckBox(serverName.toString());
 		chckbxServerName.setAlignmentX(Component.CENTER_ALIGNMENT);
 		chckbxServerName.setSelected(true);
 		chckbxServerName.setVisible(true);
@@ -412,8 +440,9 @@ public class ResourceMonitorUI extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JButton btnObj = (JButton) e.getSource();
+				String serverId = btnObj.getToolTipText();
 
-				getSrm().removeServer(btnObj.getToolTipText());
+				getSrm().removeServer(serverId);
 
 				serverListPanel.remove(btnObj.getParent());
 				serverListPanel.revalidate();
@@ -422,14 +451,7 @@ public class ResourceMonitorUI extends JFrame {
 		});
 		serverItemPanel.add(btnDelete);
 
-		serverListPanel.add(serverItemPanel);
-		serverListPanel.revalidate();
-		serverListPanel.repaint();
-
-		ServerInfoVO serverInfo = new ServerInfoVO(serverId, serverName,
-				serverIP, serverPort, userId, password);
-
-		getSrm().addServer(serverInfo);
+		return serverItemPanel;
 	}
 
 	public void displayMessage(String message) {

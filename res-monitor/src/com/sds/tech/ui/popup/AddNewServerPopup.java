@@ -17,6 +17,7 @@ import javax.swing.JTextField;
 
 import net.miginfocom.swing.MigLayout;
 
+import com.sds.tech.component.ServerConnector;
 import com.sds.tech.ui.ResourceMonitorUI;
 
 public class AddNewServerPopup extends JFrame {
@@ -28,7 +29,7 @@ public class AddNewServerPopup extends JFrame {
 	private JTextField serverIP;
 	private JTextField serverPort;
 	private JTextField userId;
-	private JTextField password;
+	private JTextField userPw;
 
 	public AddNewServerPopup(ResourceMonitorUI parent) {
 		setMaximumSize(new Dimension(370, 260));
@@ -113,9 +114,9 @@ public class AddNewServerPopup extends JFrame {
 		JLabel lblPassword = new JLabel("Password");
 		serverInformationPanel.add(lblPassword, "cell 1 5,grow");
 
-		password = new JPasswordField();
-		password.setColumns(15);
-		serverInformationPanel.add(password, "cell 1 6,grow");
+		userPw = new JPasswordField();
+		userPw.setColumns(15);
+		serverInformationPanel.add(userPw, "cell 1 6,grow");
 		return serverInformationPanel;
 	}
 
@@ -143,10 +144,11 @@ public class AddNewServerPopup extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				getParent().addNewServer(getServerName(), getServerIP(),
-						Integer.parseInt(getServerPort()), getUserId(),
-						getPassword());
+				ServerConnector newServer = new ServerConnector(
+						getServerName(), getServerIP(), getServerPort(), getUserId(),
+						getUserPw());
 
+				getParent().getSrm().addServer(newServer);
 				resetForm();
 				setVisible(false);
 			}
@@ -161,7 +163,7 @@ public class AddNewServerPopup extends JFrame {
 		this.serverIP.setText(null);
 		this.serverPort.setText(null);
 		this.userId.setText(null);
-		this.password.setText(null);
+		this.userPw.setText(null);
 	}
 
 	public String getServerName() {
@@ -196,12 +198,12 @@ public class AddNewServerPopup extends JFrame {
 		this.userId = userId;
 	}
 
-	public String getPassword() {
-		return password.getText();
+	public String getUserPw() {
+		return userPw.getText();
 	}
 
-	public void setPassword(JTextField password) {
-		this.password = password;
+	public void setUserPw(JTextField password) {
+		this.userPw = password;
 	}
 
 	public ResourceMonitorUI getParent() {

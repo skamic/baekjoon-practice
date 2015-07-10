@@ -109,12 +109,9 @@ public class ResultSettingsPopup extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				getParent()
-						.getSrm()
-						.getDataLoggingManager()
-						.setResultSettings(getResultName().getText(),
-								getResultDirectory().getText());
-
+				getParent().getSrm().saveResultSettings(
+						getResultName().getText(),
+						getResultDirectory().getText());
 				resetForm();
 				setVisible(false);
 			}

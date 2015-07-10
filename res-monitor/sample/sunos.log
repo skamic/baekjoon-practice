@@ -1,0 +1,5 @@
+2015년 5월 21일 목요일 오전 01시 04분 11초
+SunOS comwbdv1 5.10 Generic_150400-20 sun4v sparc sun4v
+ kthr      memory            page            disk          faults      cpu
+ r b w   swap  free  re  mf pi po fr de sr m0 m1 m2 m1   in   sy   cs us sy id
+ 0 0 0 86881736 60168176 1 1 0  1  0  0  1  0  0  0 59  744  220  541  0  0 100

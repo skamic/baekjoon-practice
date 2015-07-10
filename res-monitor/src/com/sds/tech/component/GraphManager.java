@@ -5,20 +5,21 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
 import com.sds.tech.ServerResourceMonitor;
 
-public class GraphManager {
+public class GraphManager implements Runnable {
 	private ServerResourceMonitor srm;
+	private String type;
+	private Component graph;
 
-	private final String DEFAULT_IMAGE_DIRECTORY_PATH = "C:\\Users\\SDS\\Downloads";
-
-	public GraphManager(ServerResourceMonitor srm) {
+	public GraphManager(ServerResourceMonitor srm, String type) {
 		this.srm = srm;
+		this.type = type;
 	}
 
 	public ServerResourceMonitor getSrm() {
@@ -29,34 +30,52 @@ public class GraphManager {
 		this.srm = srm;
 	}
 
-	public void saveGraphAsImage(Component graph, String type) {
-		StringBuffer imageFullPath = new StringBuffer();
-		String resultDirectoryPath = getSrm().getDataLoggingManager()
-				.getResultDirectoryPath();
-		String resultName = getSrm().getDataLoggingManager().getResultName();
+	public void setGraph(Component graph) {
+		this.graph = graph;
+	}
 
-		if (resultDirectoryPath == null) {
-			resultDirectoryPath = DEFAULT_IMAGE_DIRECTORY_PATH;
-		}
+	public void saveGraphAsImage(String imageName) {
+		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
+		StringBuffer imageNameBuffer = new StringBuffer();
 
-		if (resultName == null) {
-			SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd_HHmmss");
-			resultName = formatter.format(new Date());
-		}
+		imageNameBuffer.append(imageName).append("_").append(this.type)
+				.append(".png");
 
-		imageFullPath.append(resultDirectoryPath).append(File.separator)
-				.append(resultName).append("_").append(type).append(".png");
+		String imagePath = dataAccessManager.getFileFullPath(imageNameBuffer
+				.toString());
 
-		BufferedImage image = new BufferedImage(graph.getWidth(),
-				graph.getHeight(), BufferedImage.TYPE_INT_RGB);
+		BufferedImage image = new BufferedImage(this.graph.getWidth(),
+				this.graph.getHeight(), BufferedImage.TYPE_INT_RGB);
 		Graphics2D graphics2D = image.createGraphics();
 
-		graph.paint(graphics2D);
+		this.graph.paint(graphics2D);
 
 		try {
-			ImageIO.write(image, "png", new File(imageFullPath.toString()));
+			ImageIO.write(image, "png", new File(imagePath));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void run() {
+		int sequence = 1;
+		boolean isStarted = false;
+		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
+
+		do {
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+			Map<String, Integer> data = dataAccessManager.selectData(this.type,
+					sequence);
+
+			isStarted = getSrm().isStarted();
+		} while (isStarted);
+
+		System.out.println(this.type + " : " + new Date());
 	}
 }
