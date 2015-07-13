@@ -9,7 +9,7 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
 import com.sds.tech.ServerResourceMonitor;
 
-public class CpuUsageCollector implements ResourceCollector {
+public class CpuUsageCollector implements Runnable {
 	private final String RESOURCE_TYPE = "cpu";
 	private final String COMMAND = "vmstat 5 10000";
 
@@ -22,11 +22,10 @@ public class CpuUsageCollector implements ResourceCollector {
 	private int seq;
 
 	public CpuUsageCollector() {
-		super();
+
 	}
 
 	public CpuUsageCollector(ServerConnector serverConnector) {
-		super();
 		this.srm = serverConnector.getSrm();
 		this.serverName = serverConnector.getServerName();
 		this.osType = serverConnector.getOsType();
@@ -56,12 +55,9 @@ public class CpuUsageCollector implements ResourceCollector {
 		executeCommand();
 	}
 
-	@Override
 	public void executeCommand() {
 
 		try {
-			boolean isStarted = false;
-
 			// channel = session.openChannel("exec");
 			// ((ChannelExec) channel).setCommand(COMMAND);
 			//
@@ -69,10 +65,9 @@ public class CpuUsageCollector implements ResourceCollector {
 			// ((ChannelExec) channel).setErrStream(System.err);
 			//
 			// InputStream in = channel.getInputStream();
+			InputStream in = new FileInputStream(new File("sample/aix.log"));
 			//
 			// channel.connect();
-
-			InputStream in = new FileInputStream(new File("sample/aix.log"));
 
 			byte[] tmp = new byte[1024];
 			do {
@@ -88,18 +83,18 @@ public class CpuUsageCollector implements ResourceCollector {
 
 				Thread.sleep(5000);
 
-				isStarted = srm.isStarted();
-				// } while (isStarted && (in.available() > 0) &&
+				// } while (srm.isStarted() && (in.available() > 0) &&
 				// !channel.isClosed());
-			} while (isStarted && (in.available() > 0));
+			} while (srm.isStarted() && (in.available() > 0));
 
 			// channel.disconnect();
+
+			in.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	@Override
 	public void insertData(String result) {
 		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
 		int percent = 100;

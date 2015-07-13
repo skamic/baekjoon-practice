@@ -28,7 +28,7 @@ public class ServerManager {
 		this.srm = srm;
 	}
 
-	public Map<String, ServerConnector> getServerList() {
+	public Map<String, ServerConnector> getServerMap() {
 		return serverMap;
 	}
 

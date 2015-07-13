@@ -104,8 +104,9 @@ public class ServerResourceMonitor {
 		});
 	}
 
-	public void addServer(ServerConnector serverInfo) {
-		this.serverManager.addServer(serverInfo);
+	public void addServer(ServerConnector serverConnector) {
+		this.serverManager.addServer(serverConnector);
+		this.mainUI.addServer(serverConnector);
 	}
 
 	public void removeServer(String serverId) {
@@ -125,13 +126,12 @@ public class ServerResourceMonitor {
 				StringTokenizer tokenizer = new StringTokenizer(buffer, ",");
 
 				if (tokenizer.countTokens() == 5) {
-					ServerConnector server = new ServerConnector(
+					ServerConnector serverConnector = new ServerConnector(
 							tokenizer.nextToken(), tokenizer.nextToken(),
 							tokenizer.nextToken(), tokenizer.nextToken(),
 							tokenizer.nextToken());
 
-					this.serverManager.addServer(server);
-					this.mainUI.addServer(server);
+					addServer(serverConnector);
 				}
 			}
 		} catch (FileNotFoundException e) {
@@ -153,7 +153,7 @@ public class ServerResourceMonitor {
 
 	public void startMonitoring() {
 		try {
-			this.dataAccessManager.startMonitoring();
+			// this.dataAccessManager.startMonitoring();
 
 			Thread cpuGraphManagerThread = new Thread(this.cpuGraphManager,
 					"CPU GraphManager");
@@ -171,8 +171,8 @@ public class ServerResourceMonitor {
 
 	public void stopMonitoring() {
 		setStarted(false);
-		
-		this.serverManager.stopMonitoring();
+
+		// this.serverManager.stopMonitoring();
 	}
 
 	public void saveResultSettings(String resultName, String resultDirectoryPath) {
@@ -185,8 +185,8 @@ public class ServerResourceMonitor {
 		String imageName = formatter.format(new Date());
 
 		this.dataAccessManager.createResultFolder();
-		this.cpuGraphManager.saveGraphAsImage(imageName);
-		this.memoryGraphManager.saveGraphAsImage(imageName);
+		this.cpuGraphManager.saveChartAsImage(imageName);
+		this.memoryGraphManager.saveChartAsImage(imageName);
 	}
 
 }

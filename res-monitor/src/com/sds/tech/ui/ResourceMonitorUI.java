@@ -30,8 +30,8 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
+import org.jfree.data.time.TimeSeriesCollection;
 
 import com.sds.tech.ServerResourceMonitor;
 import com.sds.tech.component.DataAccessManager;
@@ -305,8 +305,8 @@ public class ResourceMonitorUI extends JFrame {
 		graphPanel.add(cpuUsagePanel, "cell 0 0,grow");
 		graphPanel.add(memoryUsagePanel, "cell 0 1,grow");
 
-		cpuGraphManager.setGraph(cpuUsagePanel);
-		memoryGraphManager.setGraph(memoryUsagePanel);
+		cpuGraphManager.setChart(cpuUsagePanel);
+		memoryGraphManager.setChart(memoryUsagePanel);
 
 		return graphPanel;
 	}
@@ -323,10 +323,13 @@ public class ResourceMonitorUI extends JFrame {
 		JLabel lblCpuUsage = new JLabel("CPU Usage (%)");
 		cpuUsagePanel.add(lblCpuUsage, "cell 0 0,grow");
 
+		final TimeSeriesCollection cpuDataset = new TimeSeriesCollection();
 		JFreeChart cpuChart = ChartFactory.createTimeSeriesChart(null,
-				"Elapsed Time (s)", "CPU Usage (%)", null, true, true, false);
+				"Elapsed Time (s)", "CPU Usage (%)", cpuDataset, true, true,
+				false);
 
 		final XYPlot plot = cpuChart.getXYPlot();
+		srm.getCpuGraphManager().setPlot(plot);
 
 		plot.setBackgroundPaint(new Color(0xffffe0));
 		plot.setDomainGridlinesVisible(true);
@@ -336,9 +339,12 @@ public class ResourceMonitorUI extends JFrame {
 
 		ValueAxis xaxis = plot.getDomainAxis();
 		xaxis.setAutoRange(true);
+		xaxis.setVerticalTickLabels(true);
+
+		ValueAxis yaxis = plot.getRangeAxis();
+		yaxis.setRange(0.0, 100.0);
 
 		ChartPanel cpuChartPanel = new ChartPanel(cpuChart);
-		cpuChartPanel.setHorizontalAxisTrace(true);
 		cpuChartPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
 		cpuChartPanel.setLayout(new MigLayout("", "[]", "[]"));
@@ -360,11 +366,28 @@ public class ResourceMonitorUI extends JFrame {
 		JLabel lblMemoryUsage = new JLabel("Memory Usage (%)");
 		memoryUsagePanel.add(lblMemoryUsage, "cell 0 0,grow");
 
-		JFreeChart memoryChart = ChartFactory.createXYLineChart(null,
-				"Elapsed Time (s)", "Memory Usage (%)", null,
-				PlotOrientation.VERTICAL, true, true, false);
+		final TimeSeriesCollection memoryDataset = new TimeSeriesCollection();
+		JFreeChart memoryChart = ChartFactory.createTimeSeriesChart(null,
+				"Elapsed Time (s)", "Memory Usage (%)", memoryDataset, true,
+				true, false);
+
+		final XYPlot plot = memoryChart.getXYPlot();
+		srm.getMemoryGraphManager().setPlot(plot);
+
+		plot.setBackgroundPaint(new Color(0xffffe0));
+		plot.setDomainGridlinesVisible(true);
+		plot.setDomainGridlinePaint(Color.lightGray);
+		plot.setRangeGridlinesVisible(true);
+		plot.setRangeGridlinePaint(Color.lightGray);
+
+		ValueAxis xaxis = plot.getDomainAxis();
+		xaxis.setAutoRange(true);
+		xaxis.setVerticalTickLabels(true);
+
+		ValueAxis yaxis = plot.getRangeAxis();
+		yaxis.setRange(0.0, 100.0);
+
 		ChartPanel memoryChartPanel = new ChartPanel(memoryChart);
-		memoryChartPanel.setHorizontalAxisTrace(true);
 		memoryChartPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED,
 				null, null, null, null));
 		memoryChartPanel.setLayout(new MigLayout("", "[]", "[]"));
@@ -400,14 +423,9 @@ public class ResourceMonitorUI extends JFrame {
 	 * @param password
 	 */
 	public void addServer(ServerConnector server) {
-		StringBuffer sb = new StringBuffer();
-		String serverId = server.getServerId();
-
-		sb.append(server.getServerName()).append("\n(").append(serverId)
-				.append(")");
-
-		serverListPanel.add(createServerItemPanel(sb.toString(), serverId),
-				"wrap");
+		serverListPanel.add(
+				createServerItemPanel(server.getServerName(),
+						server.getServerId()), "wrap");
 		serverListPanel.revalidate();
 		serverListPanel.repaint();
 	}
@@ -429,6 +447,18 @@ public class ResourceMonitorUI extends JFrame {
 		chckbxServerName.setAlignmentX(Component.CENTER_ALIGNMENT);
 		chckbxServerName.setSelected(true);
 		chckbxServerName.setVisible(true);
+		chckbxServerName.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JCheckBox source = (JCheckBox) e.getSource();
+
+				srm.getCpuGraphManager().toggleChartDataset(source.getText(),
+						source.isSelected());
+				srm.getMemoryGraphManager().toggleChartDataset(
+						source.getText(), source.isSelected());
+			}
+		});
 		serverItemPanel.add(chckbxServerName);
 
 		JButton btnDelete = new JButton("Delete");

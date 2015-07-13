@@ -17,14 +17,14 @@ public class DataAccessManagerTest {
 		this.srm = new ServerResourceMonitor();
 	}
 
-	@Test
+//	@Test
 	public void createTableTest() throws Exception {
 		DataAccessManager dataLoggingManager = this.srm.getDataAccessManager();
 
 		dataLoggingManager.createTable();
 	}
 
-	@Test
+//	@Test
 	public void insertDataTest() throws Exception {
 		DataAccessManager dataLoggingManager = this.srm.getDataAccessManager();
 
@@ -37,23 +37,23 @@ public class DataAccessManagerTest {
 
 	@Test
 	public void selectDataTest() {
-		ServerManager connectionManager = this.srm.getServerManager();
-		DataAccessManager dataLoggingManager = this.srm.getDataAccessManager();
-		Map<String, ServerConnector> serverInfoList = connectionManager
-				.getServerList();
+		ServerManager serverManager = this.srm.getServerManager();
+		DataAccessManager dataAccessManager = this.srm.getDataAccessManager();
+		Map<String, ServerConnector> serverMap = serverManager
+				.getServerMap();
 
-		serverInfoList.put("123.123.123.123:22", new ServerConnector("WEB_1",
+		serverMap.put("123.123.123.123:22", new ServerConnector("WEB_1",
 				"123.123.123.123", "22", "", ""));
-		serverInfoList.put("123.123.123.124:22", new ServerConnector("WEB_2",
+		serverMap.put("123.123.123.124:22", new ServerConnector("WEB_2",
 				"123.123.123.124", "22", "", ""));
-		serverInfoList.put("123.123.123.125:22", new ServerConnector("WAS_1",
+		serverMap.put("123.123.123.125:22", new ServerConnector("WAS_1",
 				"123.123.123.125", "22", "", ""));
-		serverInfoList.put("123.123.123.126:22", new ServerConnector("WAS_2",
+		serverMap.put("123.123.123.126:22", new ServerConnector("WAS_2",
 				"123.123.123.126", "22", "", ""));
-		serverInfoList.put("123.123.123.127:22", new ServerConnector("DB_1",
+		serverMap.put("123.123.123.127:22", new ServerConnector("DB_1",
 				"123.123.123.127", "22", "", ""));
 
-		dataLoggingManager.selectData("cpu", 1);
+//		dataAccessManager.selectData("cpu", 1);
 	}
 
 	public ServerResourceMonitor getSrm() {

@@ -121,7 +121,7 @@ public class DataAccessManager {
 	public Map<String, Integer> selectData(String type, int seq) {
 		Map<String, Integer> result = new HashMap<String, Integer>();
 		Map<String, ServerConnector> serverInfoList = getSrm()
-				.getServerManager().getServerList();
+				.getServerManager().getServerMap();
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;

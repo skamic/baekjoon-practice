@@ -21,8 +21,8 @@ public class ServerConnector {
 	private ServerResourceMonitor srm;
 	private JSch sch;
 	private Session session;
-	private ResourceCollector cpuUsageCollector;
-	private ResourceCollector memoryUsageCollector;
+	private CpuUsageCollector cpuUsageCollector;
+	private MemoryUsageCollector memoryUsageCollector;
 
 	public static final String OS_AIX = "AIX";
 	public static final String OS_HPUX = "HP-UX";
