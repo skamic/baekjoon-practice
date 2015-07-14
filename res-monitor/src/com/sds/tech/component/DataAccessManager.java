@@ -120,7 +120,7 @@ public class DataAccessManager {
 
 	public Map<String, Integer> selectData(String type, int seq) {
 		Map<String, Integer> result = new HashMap<String, Integer>();
-		Map<String, ServerConnector> serverInfoList = getSrm()
+		Map<String, ServerConnector> serverMap = getSrm()
 				.getServerManager().getServerMap();
 		Connection conn = null;
 		PreparedStatement pstmt = null;
@@ -129,8 +129,8 @@ public class DataAccessManager {
 
 		sql.append("select seq\n");
 
-		for (String key : serverInfoList.keySet()) {
-			ServerConnector vo = serverInfoList.get(key);
+		for (String key : serverMap.keySet()) {
+			ServerConnector vo = serverMap.get(key);
 			String serverName = vo.getServerName();
 
 			sql.append(", nz(sum(switch(server_name = '").append(serverName)
@@ -150,8 +150,8 @@ public class DataAccessManager {
 			rs = pstmt.executeQuery();
 
 			while (rs.next()) {
-				for (String key : serverInfoList.keySet()) {
-					ServerConnector vo = serverInfoList.get(key);
+				for (String key : serverMap.keySet()) {
+					ServerConnector vo = serverMap.get(key);
 					String serverName = vo.getServerName();
 
 					result.put(serverName, rs.getInt(serverName));

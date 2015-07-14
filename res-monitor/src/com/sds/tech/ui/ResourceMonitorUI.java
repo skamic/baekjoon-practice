@@ -206,7 +206,9 @@ public class ResourceMonitorUI extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				addNewServerPopup.setVisible(true);
+				if (!srm.isStarted()) {
+					addNewServerPopup.setVisible(true);
+				}
 			}
 		});
 		serverListPanel.setLayout(new MigLayout("", "[left]", "[top][]"));
@@ -260,28 +262,30 @@ public class ResourceMonitorUI extends JFrame {
 			}
 		});
 
-		JButton btnGranularity = new JButton("Set Granularity");
-		btnGranularity.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				displayMessage("Set Granularity");
-			}
-		});
+		// JButton btnGranularity = new JButton("Set Granularity");
+		// btnGranularity.addActionListener(new ActionListener() {
+		//
+		// @Override
+		// public void actionPerformed(ActionEvent e) {
+		// displayMessage("Set Granularity");
+		// }
+		// });
 
 		JButton btnSaveImage = new JButton("Save as Image");
 		btnSaveImage.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				getSrm().saveGraphAsImage();
-
-				displayMessage("CPU and Memory Graphs have successfully saved.");
+				if (!srm.isStarted()) {
+					getSrm().saveGraphAsImage();
+					
+					displayMessage("CPU and Memory Graphs have successfully saved.");
+				}
 			}
 		});
 
 		buttonPanel.add(btnStartStop, "cell 0 0,grow");
-		buttonPanel.add(btnGranularity, "cell 1 0,grow");
+		// buttonPanel.add(btnGranularity, "cell 1 0,grow");
 		buttonPanel.add(btnSaveImage, "cell 2 0,grow");
 
 		return buttonPanel;
@@ -469,14 +473,16 @@ public class ResourceMonitorUI extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JButton btnObj = (JButton) e.getSource();
-				String serverId = btnObj.getToolTipText();
+				if (!srm.isStarted()) {
+					JButton btnObj = (JButton) e.getSource();
+					String serverId = btnObj.getToolTipText();
 
-				getSrm().removeServer(serverId);
+					getSrm().removeServer(serverId);
 
-				serverListPanel.remove(btnObj.getParent());
-				serverListPanel.revalidate();
-				serverListPanel.repaint();
+					serverListPanel.remove(btnObj.getParent());
+					serverListPanel.revalidate();
+					serverListPanel.repaint();
+				}
 			}
 		});
 		serverItemPanel.add(btnDelete);
