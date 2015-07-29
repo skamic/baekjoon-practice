@@ -120,8 +120,8 @@ public class DataAccessManager {
 
 	public Map<String, Integer> selectData(String type, int seq) {
 		Map<String, Integer> result = new HashMap<String, Integer>();
-		Map<String, ServerConnector> serverMap = getSrm()
-				.getServerManager().getServerMap();
+		Map<String, ServerConnector> serverMap = getSrm().getServerManager()
+				.getServerMap();
 		Connection conn = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;

@@ -20,7 +20,7 @@ public class ResourceCollectorTest {
 
 		serverConnector.setSrm(srm);
 		serverConnector.setServerName("test");
-		serverConnector.setOsType("AIX");
+		serverConnector.setOsType("SunOS");
 
 		CpuUsageCollector cpuUsageCollector = new CpuUsageCollector(
 				serverConnector);

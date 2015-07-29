@@ -1,11 +1,10 @@
 package com.sds.tech.component;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.StringTokenizer;
 
 import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.Session;
 import com.sds.tech.ServerResourceMonitor;
 
@@ -58,16 +57,16 @@ public class CpuUsageCollector implements Runnable {
 	public void executeCommand() {
 
 		try {
-			// channel = session.openChannel("exec");
-			// ((ChannelExec) channel).setCommand(COMMAND);
-			//
-			// channel.setInputStream(null);
-			// ((ChannelExec) channel).setErrStream(System.err);
-			//
-			// InputStream in = channel.getInputStream();
-			InputStream in = new FileInputStream(new File("sample/aix.log"));
-			//
-			// channel.connect();
+			channel = session.openChannel("exec");
+			((ChannelExec) channel).setCommand(COMMAND);
+
+			channel.setInputStream(null);
+			((ChannelExec) channel).setErrStream(System.err);
+
+			InputStream in = channel.getInputStream();
+			// InputStream in = new FileInputStream(new File("sample/sunos.log"));
+
+			channel.connect();
 
 			byte[] tmp = new byte[1024];
 			do {
@@ -83,11 +82,11 @@ public class CpuUsageCollector implements Runnable {
 
 				Thread.sleep(5000);
 
-				// } while (srm.isStarted() && (in.available() > 0) &&
-				// !channel.isClosed());
-			} while (srm.isStarted() && (in.available() > 0));
+			} while (srm.isStarted() && (in.available() > 0)
+					&& !channel.isClosed());
+			// } while (srm.isStarted() && (in.available() > 0));
 
-			// channel.disconnect();
+			channel.disconnect();
 
 			in.close();
 		} catch (Exception e) {
@@ -107,13 +106,13 @@ public class CpuUsageCollector implements Runnable {
 		}
 
 		if (ServerConnector.OS_AIX.equals(osType)) {
-			percent -= Integer.parseInt(token[token.length - 2]);
+			percent -= Integer.parseInt(token[token.length - 2].trim());
 		} else if (ServerConnector.OS_HPUX.equals(osType)) {
-			percent -= Integer.parseInt(token[token.length - 1]);
+			percent -= Integer.parseInt(token[token.length - 1].trim());
 		} else if (ServerConnector.OS_LINUX.equals(osType)) {
-			percent -= Integer.parseInt(token[token.length - 3]);
+			percent -= Integer.parseInt(token[token.length - 3].trim());
 		} else if (ServerConnector.OS_SOLARIS.equals(osType)) {
-			percent -= Integer.parseInt(token[token.length - 1]);
+			percent -= Integer.parseInt(token[token.length - 1].trim());
 		}
 
 		dataAccessManager.insertData(seq++, serverName, RESOURCE_TYPE, percent);
