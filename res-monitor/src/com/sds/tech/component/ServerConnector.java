@@ -1,6 +1,8 @@
 package com.sds.tech.component;
 
-import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
@@ -28,6 +30,8 @@ public class ServerConnector {
 	public static final String OS_HPUX = "HP-UX";
 	public static final String OS_LINUX = "Linux";
 	public static final String OS_SOLARIS = "SunOS";
+
+	private static final String OS_TYPE_COMMAND = "uname";
 
 	public ServerConnector() {
 		sch = new JSch();
@@ -202,34 +206,28 @@ public class ServerConnector {
 	}
 
 	private void checkOsType() {
-		Channel channel;
+		Channel channel = null;
+		String buffer = null;
+		BufferedReader br = null;
+
 		try {
 			channel = session.openChannel("exec");
-			((ChannelExec) channel).setCommand("uname");
+			((ChannelExec) channel).setCommand(OS_TYPE_COMMAND);
 
 			channel.setInputStream(null);
 			((ChannelExec) channel).setErrStream(System.err);
 
-			InputStream in = channel.getInputStream();
+			br = new BufferedReader(new InputStreamReader(
+					channel.getInputStream()));
 
 			channel.connect();
 
-			byte[] tmp = new byte[1024];
-			while (true) {
-				while (in.available() > 0) {
-					int i = in.read(tmp, 0, 1024);
-					if (i < 0) {
-						break;
-					}
-
-					osType = new String(tmp, 0, i);
+			while (channel.isClosed()) {
+				while ((buffer = br.readLine()) != null) {
+					osType = new String(buffer);
 				}
 
-				if (channel.isClosed()) {
-					if (in.available() > 0) {
-						continue;
-					}
-
+				if (!srm.isStarted()) {
 					break;
 				}
 			}
@@ -237,6 +235,12 @@ public class ServerConnector {
 			channel.disconnect();
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				br.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

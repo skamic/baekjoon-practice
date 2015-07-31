@@ -1,6 +1,8 @@
 package com.sds.tech.component;
 
-import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 
 import com.jcraft.jsch.Channel;
@@ -9,8 +11,9 @@ import com.jcraft.jsch.Session;
 import com.sds.tech.ServerResourceMonitor;
 
 public class CpuUsageCollector implements Runnable {
-	private final String RESOURCE_TYPE = "cpu";
-	private final String COMMAND = "vmstat 5 10000";
+	private static final String COMMAND = "vmstat 5 10000";
+
+	private static final String RESOURCE_TYPE = "cpu";
 
 	private ServerResourceMonitor srm;
 	private String serverName;
@@ -55,6 +58,8 @@ public class CpuUsageCollector implements Runnable {
 	}
 
 	public void executeCommand() {
+		String buffer = null;
+		BufferedReader br = null;
 
 		try {
 			channel = session.openChannel("exec");
@@ -63,39 +68,54 @@ public class CpuUsageCollector implements Runnable {
 			channel.setInputStream(null);
 			((ChannelExec) channel).setErrStream(System.err);
 
-			InputStream in = channel.getInputStream();
-			// InputStream in = new FileInputStream(new File("sample/sunos.log"));
+			br = new BufferedReader(new InputStreamReader(
+					channel.getInputStream()));
 
 			channel.connect();
 
-			byte[] tmp = new byte[1024];
-			do {
-				while (in.available() > 0) {
-					int i = in.read(tmp, 0, 1024);
+			while (!channel.isClosed()) {
+				while ((buffer = br.readLine()) != null) {
+					buffer = buffer.trim();
+					char firstChar = buffer.charAt(0);
 
-					if (i < 0) {
-						break;
+					if (firstChar < '0' || firstChar > '9') {
+						continue;
 					}
 
-					insertData(new String(tmp, 0, i));
+					insertData(buffer);
 				}
 
-				Thread.sleep(5000);
+				if (!srm.isStarted()) {
+					break;
+				}
 
-			} while (srm.isStarted() && (in.available() > 0)
-					&& !channel.isClosed());
-			// } while (srm.isStarted() && (in.available() > 0));
+				Thread.sleep(1000);
+			}
 
 			channel.disconnect();
-
-			in.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				br.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	public void insertData(String result) {
+		int percent = getCpuUsage(result);
 		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
+
+		dataAccessManager.insertData(seq++, serverName, RESOURCE_TYPE, percent);
+	}
+
+	/**
+	 * @param result
+	 * @return
+	 */
+	private int getCpuUsage(String result) {
 		int percent = 100;
 		StringTokenizer tokenizer = new StringTokenizer(result, " ");
 		String[] token = new String[tokenizer.countTokens()];
@@ -115,6 +135,6 @@ public class CpuUsageCollector implements Runnable {
 			percent -= Integer.parseInt(token[token.length - 1].trim());
 		}
 
-		dataAccessManager.insertData(seq++, serverName, RESOURCE_TYPE, percent);
+		return percent;
 	}
 }

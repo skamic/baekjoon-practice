@@ -1,16 +1,22 @@
 package com.sds.tech.component;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.sds.tech.ServerResourceMonitor;
 
 public class MemoryUsageCollector implements Runnable {
-	private final String RESOURCE_TYPE = "memory";
+	private static final String LINUX_MEM_USED_COMMAND = "free | grep ^-/+ | gawk '{print $3}'";
+	private static final String LINUX_MEM_TOTAL_COMMAND = "free | grep ^Mem | gawk '{print $2}'";
+
+	private static final String AIX_MEM_USED_COMMAND = "svmon -G | grep ^memory | awk '{print $3}'";
+	private static final String AIX_MEM_TOTAL_COMMAND = "svmon -G | grep ^memory | awk '{print $2}'";
+
+	private static final String RESOURCE_TYPE = "memory";
 
 	private ServerResourceMonitor srm;
 	private String serverName;
@@ -19,7 +25,6 @@ public class MemoryUsageCollector implements Runnable {
 	private Channel channel;
 
 	private int seq;
-	private long memTotal;
 
 	public MemoryUsageCollector() {
 
@@ -50,111 +55,120 @@ public class MemoryUsageCollector implements Runnable {
 
 	@Override
 	public void run() {
+		String memTotalCommand = null;
+		String memUsedCommand = null;
+		long memTotal = 0;
+
 		seq = 1;
 
 		if (ServerConnector.OS_AIX.equals(osType)) {
-			executeAixCommand();
+			memTotalCommand = AIX_MEM_TOTAL_COMMAND;
+			memUsedCommand = AIX_MEM_USED_COMMAND;
 		} else if (ServerConnector.OS_HPUX.equals(osType)) {
-			executeHpuxCommand();
+
 		} else if (ServerConnector.OS_LINUX.equals(osType)) {
-			executeLinuxCommand();
+			memTotalCommand = LINUX_MEM_TOTAL_COMMAND;
+			memUsedCommand = LINUX_MEM_USED_COMMAND;
 		} else if (ServerConnector.OS_SOLARIS.equals(osType)) {
-			executeSolarisCommand();
+
 		}
-	}
-	
-	private void executeAixCommand() {
-		final String MEM_TOTAL_COMMAND = "svmon -G | grep ^memory | awk '{print $2}'";
-		final String MEM_USED_COMMAND = "svmon -G | grep ^memory | awk '{print $3}'";
+
+		memTotal = getMemoryTotal(memTotalCommand);
+		executeCommand(memUsedCommand, memTotal);
 	}
 
-	private void executeHpuxCommand() {
-
-	}
-	
-	private void executeLinuxCommand() {
-		final String MEM_TOTAL_COMMAND = "free | grep ^Mem | gawk '{print $2}'";
-		final String MEM_USED_COMMAND = "free | grep ^-/+ | gawk '{print $3}'";
+	private long getMemoryTotal(final String MEM_TOTAL_COMMAND) {
 		long memTotal = 0;
-		long memUsed = 0;
+		String buffer = null;
+		BufferedReader br = null;
 
 		try {
 			channel = session.openChannel("exec");
-			((ChannelExec) channel)
-					.setCommand(MEM_TOTAL_COMMAND);
+			((ChannelExec) channel).setCommand(MEM_TOTAL_COMMAND);
 
 			channel.setInputStream(null);
 			((ChannelExec) channel).setErrStream(System.err);
 
-			InputStream in = channel.getInputStream();
-			// InputStream in = new FileInputStream(new File("sample/aix.log"));
+			br = new BufferedReader(new InputStreamReader(
+					channel.getInputStream()));
 
 			channel.connect();
 
-			byte[] tmp = new byte[1024];
-			do {
-				while (in.available() > 0) {
-					int i = in.read(tmp, 0, 1024);
-
-					if (i < 0) {
-						break;
-					}
-
-					memTotal = Long.parseLong(new String(tmp, 0, i));
+			while (channel.isClosed()) {
+				while ((buffer = br.readLine()) != null) {
+					memTotal = Long.parseLong(buffer);
 				}
-				// } while (srm.isStarted() && (in.available() > 0) &&
-				// channel.isClosed());
-			} while (srm.isStarted() && (in.available() > 0));
 
-			// channel.disconnect();
-			in.close();
+				if (!srm.isStarted()) {
+					break;
+				}
+			}
 
+			channel.disconnect();
+
+			br.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				br.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return memTotal;
+	}
+
+	private void executeCommand(final String MEM_USED_COMMAND,
+			final long memTotal) {
+		long memUsed = 0;
+		String buffer = null;
+		BufferedReader br = null;
+
+		try {
 			channel = session.openChannel("exec");
-			((ChannelExec) channel)
-					.setCommand(MEM_USED_COMMAND);
+			((ChannelExec) channel).setCommand(MEM_USED_COMMAND);
 
 			channel.setInputStream(null);
 			((ChannelExec) channel).setErrStream(System.err);
 
-			in = channel.getInputStream();
-			// in = new FileInputStream(new File("sample/aix.log"));
+			br = new BufferedReader(new InputStreamReader(
+					channel.getInputStream()));
 
-			do {
+			while (srm.isStarted()) {
 				channel.connect();
 
-				tmp = new byte[1024];
-				do {
-					while (in.available() > 0) {
-						int i = in.read(tmp, 0, 1024);
-
-						if (i < 0) {
-							break;
-						}
-
-						memUsed = Long.parseLong(new String(tmp, 0, i));
+				while (channel.isClosed()) {
+					while ((buffer = br.readLine()) != null) {
+						memUsed = Long.parseLong(buffer);
 
 						insertData(Math.round(memUsed / memTotal));
 					}
-					// } while (srm.isStarted() && (in.available() > 0) &&
-					// channel.isClosed());
-				} while (srm.isStarted() && (in.available() > 0));
 
-				// channel.disconnect();
-			} while (srm.isStarted());
-			in.close();
-		} catch (JSchException e) {
+					if (!srm.isStarted()) {
+						break;
+					}
+				}
+
+				channel.disconnect();
+
+				Thread.sleep(5000);
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+		} finally {
+			try {
+				br.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
-	private void executeSolarisCommand() {
-		// TODO Auto-generated method stub
-
-	}
-
 	public void insertData(int percent) {
+		DataAccessManager dataAccessManager = srm.getDataAccessManager();
 
+		dataAccessManager.insertData(seq++, serverName, RESOURCE_TYPE, percent);
 	}
 }
