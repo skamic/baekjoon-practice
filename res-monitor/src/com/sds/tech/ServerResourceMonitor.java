@@ -153,7 +153,7 @@ public class ServerResourceMonitor {
 
 	public void startMonitoring() {
 		try {
-			// this.dataAccessManager.startMonitoring();
+			this.dataAccessManager.startMonitoring();
 
 			Thread cpuGraphManagerThread = new Thread(this.cpuGraphManager,
 					"CPU GraphManager");

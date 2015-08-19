@@ -10,11 +10,17 @@ import com.jcraft.jsch.Session;
 import com.sds.tech.ServerResourceMonitor;
 
 public class MemoryUsageCollector implements Runnable {
-	private static final String LINUX_MEM_USED_COMMAND = "free | grep ^-/+ | gawk '{print $3}'";
 	private static final String LINUX_MEM_TOTAL_COMMAND = "free | grep ^Mem | gawk '{print $2}'";
+	private static final String LINUX_MEM_FREE_COMMAND = "free | grep ^-/+ | gawk '{print $4}'";
 
-	private static final String AIX_MEM_USED_COMMAND = "svmon -G | grep ^memory | awk '{print $3}'";
 	private static final String AIX_MEM_TOTAL_COMMAND = "svmon -G | grep ^memory | awk '{print $2}'";
+	private static final String AIX_MEM_FREE_COMMAND = "svmon -G | grep ^memory | awk '{print $4}'";
+
+	private static final String SOLARIS_MEM_TOTAL_COMMAND = "prtconf | grep Memory | head -1 | awk 'BEGIN {FS=\" \"} {print $3}'";
+	private static final String SOLARIS_MEM_FREE_COMMAND = "sar -r 1 1 | tail -1 | awk 'BEGIN {FS=\" \"} {print $2}'";
+
+	private static final String HPUX_MEM_TOTAL_COMMAND = "swapinfo -tam | grep total | awk '{print $2}'";
+	private static final String HPUX_MEM_FREE_COMMAND = "swapinfo -tam | grep total | awk '{print $4}'";
 
 	private static final String RESOURCE_TYPE = "memory";
 
@@ -56,25 +62,29 @@ public class MemoryUsageCollector implements Runnable {
 	@Override
 	public void run() {
 		String memTotalCommand = null;
-		String memUsedCommand = null;
+		String memFreeCommand = null;
 		long memTotal = 0;
+		float memFreeFactor = 1;
 
 		seq = 1;
 
 		if (ServerConnector.OS_AIX.equals(osType)) {
 			memTotalCommand = AIX_MEM_TOTAL_COMMAND;
-			memUsedCommand = AIX_MEM_USED_COMMAND;
+			memFreeCommand = AIX_MEM_FREE_COMMAND;
 		} else if (ServerConnector.OS_HPUX.equals(osType)) {
-
+			memTotalCommand = HPUX_MEM_TOTAL_COMMAND;
+			memFreeCommand = HPUX_MEM_FREE_COMMAND;
 		} else if (ServerConnector.OS_LINUX.equals(osType)) {
 			memTotalCommand = LINUX_MEM_TOTAL_COMMAND;
-			memUsedCommand = LINUX_MEM_USED_COMMAND;
+			memFreeCommand = LINUX_MEM_FREE_COMMAND;
 		} else if (ServerConnector.OS_SOLARIS.equals(osType)) {
-
+			memTotalCommand = SOLARIS_MEM_TOTAL_COMMAND;
+			memFreeCommand = SOLARIS_MEM_FREE_COMMAND;
+			memFreeFactor = 8 / 1024;
 		}
 
 		memTotal = getMemoryTotal(memTotalCommand);
-		executeCommand(memUsedCommand, memTotal);
+		executeCommand(memFreeCommand, memTotal, memFreeFactor);
 	}
 
 	private long getMemoryTotal(final String MEM_TOTAL_COMMAND) {
@@ -120,15 +130,15 @@ public class MemoryUsageCollector implements Runnable {
 		return memTotal;
 	}
 
-	private void executeCommand(final String MEM_USED_COMMAND,
-			final long memTotal) {
-		long memUsed = 0;
+	private void executeCommand(final String MEM_FREE_COMMAND,
+			final long memTotal, float memFreeFactor) {
+		long memFree = 0;
 		String buffer = null;
 		BufferedReader br = null;
 
 		try {
 			channel = session.openChannel("exec");
-			((ChannelExec) channel).setCommand(MEM_USED_COMMAND);
+			((ChannelExec) channel).setCommand(MEM_FREE_COMMAND);
 
 			channel.setInputStream(null);
 			((ChannelExec) channel).setErrStream(System.err);
@@ -141,9 +151,11 @@ public class MemoryUsageCollector implements Runnable {
 
 				while (channel.isClosed()) {
 					while ((buffer = br.readLine()) != null) {
-						memUsed = Long.parseLong(buffer);
+						memFree = Long.parseLong(buffer);
 
-						insertData(Math.round(memUsed / memTotal));
+						insertData(Math.round((memTotal - memFree
+								* memFreeFactor)
+								/ memTotal));
 					}
 
 					if (!srm.isStarted()) {

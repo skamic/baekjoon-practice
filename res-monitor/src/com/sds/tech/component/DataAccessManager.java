@@ -192,10 +192,10 @@ public class DataAccessManager {
 		File dataFile = new File(getFileFullPath(FILE_MDB_NAME));
 
 		if (dataFile.exists()) {
-			// dropTable();
+			dropTable();
 		}
 
-		// createTable();
+		createTable();
 	}
 
 	private int dropTable() throws Exception {

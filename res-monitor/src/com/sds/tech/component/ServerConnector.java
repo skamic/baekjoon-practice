@@ -222,7 +222,7 @@ public class ServerConnector {
 
 			channel.connect();
 
-			while (channel.isClosed()) {
+			while (!channel.isClosed()) {
 				while ((buffer = br.readLine()) != null) {
 					osType = new String(buffer);
 				}
