@@ -83,6 +83,13 @@ public class GraphManager implements Runnable {
 		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
 
 		initializeTimeSeriesMap();
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		do {
 			try {

@@ -222,14 +222,8 @@ public class ServerConnector {
 
 			channel.connect();
 
-			while (!channel.isClosed()) {
-				while ((buffer = br.readLine()) != null) {
-					osType = new String(buffer);
-				}
-
-				if (!srm.isStarted()) {
-					break;
-				}
+			while ((buffer = br.readLine()) != null) {
+				osType = new String(buffer);
 			}
 
 			channel.disconnect();

@@ -73,7 +73,7 @@ public class CpuUsageCollector implements Runnable {
 
 			channel.connect();
 
-			while (!channel.isClosed()) {
+			while (true) {
 				while ((buffer = br.readLine()) != null) {
 					buffer = buffer.trim();
 					char firstChar = buffer.charAt(0);
@@ -85,7 +85,7 @@ public class CpuUsageCollector implements Runnable {
 					insertData(buffer);
 				}
 
-				if (!srm.isStarted()) {
+				if (!srm.isStarted() || channel.isClosed()) {
 					break;
 				}
 

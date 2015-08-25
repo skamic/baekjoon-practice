@@ -20,12 +20,18 @@ public class ResourceCollectorTest {
 
 		serverConnector.setSrm(srm);
 		serverConnector.setServerName("test");
-		serverConnector.setOsType("SunOS");
+		serverConnector.setServerIP("182.193.2.50");
+		serverConnector.setServerPort(22);
+		serverConnector.setUserId("webuser");
+		serverConnector.setUserPw("csprod@015");
+		serverConnector.setOsType("Linux");
 
-		CpuUsageCollector cpuUsageCollector = new CpuUsageCollector(
-				serverConnector);
-		Thread thread = new Thread(cpuUsageCollector, "Test");
-
-		thread.run();
+		serverConnector.startMonitoring();
+		
+//		CpuUsageCollector cpuUsageCollector = new CpuUsageCollector(
+//				serverConnector);
+//		Thread thread = new Thread(cpuUsageCollector, "Test");
+//
+//		thread.run();
 	}
 }

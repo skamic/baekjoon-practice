@@ -11,7 +11,7 @@ import com.sds.tech.ServerResourceMonitor;
 
 public class MemoryUsageCollector implements Runnable {
 	private static final String LINUX_MEM_TOTAL_COMMAND = "free | grep ^Mem | gawk '{print $2}'";
-	private static final String LINUX_MEM_FREE_COMMAND = "free | grep ^-/+ | gawk '{print $4}'";
+	private static final String LINUX_MEM_FREE_COMMAND = "free | grep ^Mem | gawk '{print $4}'";
 
 	private static final String AIX_MEM_TOTAL_COMMAND = "svmon -G | grep ^memory | awk '{print $2}'";
 	private static final String AIX_MEM_FREE_COMMAND = "svmon -G | grep ^memory | awk '{print $4}'";
@@ -104,14 +104,8 @@ public class MemoryUsageCollector implements Runnable {
 
 			channel.connect();
 
-			while (channel.isClosed()) {
-				while ((buffer = br.readLine()) != null) {
-					memTotal = Long.parseLong(buffer);
-				}
-
-				if (!srm.isStarted()) {
-					break;
-				}
+			while ((buffer = br.readLine()) != null) {
+				memTotal = Long.parseLong(buffer);
 			}
 
 			channel.disconnect();
@@ -133,48 +127,37 @@ public class MemoryUsageCollector implements Runnable {
 	private void executeCommand(final String MEM_FREE_COMMAND,
 			final long memTotal, float memFreeFactor) {
 		long memFree = 0;
+		double percent = 0;
 		String buffer = null;
 		BufferedReader br = null;
 
 		try {
-			channel = session.openChannel("exec");
-			((ChannelExec) channel).setCommand(MEM_FREE_COMMAND);
-
-			channel.setInputStream(null);
-			((ChannelExec) channel).setErrStream(System.err);
-
-			br = new BufferedReader(new InputStreamReader(
-					channel.getInputStream()));
-
 			while (srm.isStarted()) {
+				channel = session.openChannel("exec");
+				((ChannelExec) channel).setCommand(MEM_FREE_COMMAND);
+
+				channel.setInputStream(null);
+				((ChannelExec) channel).setErrStream(System.err);
+
+				br = new BufferedReader(new InputStreamReader(
+						channel.getInputStream()));
+
 				channel.connect();
 
-				while (channel.isClosed()) {
-					while ((buffer = br.readLine()) != null) {
-						memFree = Long.parseLong(buffer);
-
-						insertData(Math.round((memTotal - memFree
-								* memFreeFactor)
-								/ memTotal));
-					}
-
-					if (!srm.isStarted()) {
-						break;
-					}
+				while ((buffer = br.readLine()) != null) {
+					memFree = Long.parseLong(buffer);
+					percent = Math
+							.round(((memTotal - memFree * memFreeFactor) / memTotal) * 100);
+					insertData((int) percent);
 				}
 
 				channel.disconnect();
+				br.close();
 
 				Thread.sleep(5000);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				br.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 

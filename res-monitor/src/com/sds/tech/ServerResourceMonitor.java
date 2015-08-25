@@ -153,7 +153,10 @@ public class ServerResourceMonitor {
 
 	public void startMonitoring() {
 		try {
+			setStarted(true);
+			
 			this.dataAccessManager.startMonitoring();
+			this.serverManager.startMonitoring();
 
 			Thread cpuGraphManagerThread = new Thread(this.cpuGraphManager,
 					"CPU GraphManager");
@@ -162,8 +165,6 @@ public class ServerResourceMonitor {
 
 			cpuGraphManagerThread.start();
 			memoryGraphManagerThread.start();
-
-			setStarted(true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -172,7 +173,7 @@ public class ServerResourceMonitor {
 	public void stopMonitoring() {
 		setStarted(false);
 
-		// this.serverManager.stopMonitoring();
+		this.serverManager.stopMonitoring();
 	}
 
 	public void saveResultSettings(String resultName, String resultDirectoryPath) {
