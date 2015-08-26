@@ -11,7 +11,7 @@ import com.sds.tech.ServerResourceMonitor;
 
 public class MemoryUsageCollector implements Runnable {
 	private static final String LINUX_MEM_TOTAL_COMMAND = "free | grep ^Mem | gawk '{print $2}'";
-	private static final String LINUX_MEM_FREE_COMMAND = "free | grep ^Mem | gawk '{print $4}'";
+	private static final String LINUX_MEM_FREE_COMMAND = "free | grep ^-/+ | gawk '{print $4}'";
 
 	private static final String AIX_MEM_TOTAL_COMMAND = "svmon -G | grep ^memory | awk '{print $2}'";
 	private static final String AIX_MEM_FREE_COMMAND = "svmon -G | grep ^memory | awk '{print $4}'";
@@ -65,6 +65,10 @@ public class MemoryUsageCollector implements Runnable {
 		String memFreeCommand = null;
 		long memTotal = 0;
 		float memFreeFactor = 1;
+		StringBuffer message = new StringBuffer();
+
+		message.append(serverName).append("'s Memory usage monitoring start.");
+		getSrm().getMainUI().displayMessage(message.toString());
 
 		seq = 1;
 
@@ -85,6 +89,9 @@ public class MemoryUsageCollector implements Runnable {
 
 		memTotal = getMemoryTotal(memTotalCommand);
 		executeCommand(memFreeCommand, memTotal, memFreeFactor);
+		
+		message.delete(0, message.length()).append(serverName).append("'s Memory usage monitoring stop.");
+		getSrm().getMainUI().displayMessage(message.toString());
 	}
 
 	private long getMemoryTotal(final String MEM_TOTAL_COMMAND) {

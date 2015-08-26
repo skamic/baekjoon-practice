@@ -152,6 +152,8 @@ public class ServerConnector {
 	}
 
 	public void startMonitoring() {
+		StringBuffer message = new StringBuffer();
+
 		try {
 			session = sch.getSession(userId, serverIP, serverPort);
 			session.setUserInfo(new UserInfo() {
@@ -187,6 +189,9 @@ public class ServerConnector {
 			});
 
 			session.connect();
+			message.append(serverIP).append(":").append(serverPort)
+					.append(" connected.");
+			getSrm().getMainUI().displayMessage(message.toString());
 
 			checkOsType();
 
@@ -240,5 +245,11 @@ public class ServerConnector {
 
 	public void stopMonitoring() {
 		session.disconnect();
+
+		StringBuffer message = new StringBuffer();
+		message.append(serverIP).append(":").append(serverPort)
+				.append(" disconnected.");
+
+		getSrm().getMainUI().displayMessage(message.toString());
 	}
 }

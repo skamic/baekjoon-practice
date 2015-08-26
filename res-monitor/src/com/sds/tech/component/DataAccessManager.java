@@ -1,6 +1,8 @@
 package com.sds.tech.component;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,6 +12,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
 
 import com.sds.tech.ServerResourceMonitor;
 
@@ -55,6 +59,11 @@ public class DataAccessManager {
 	public void saveResultSettings(String resultName, String resultDirectoryPath) {
 		setResultName(resultName);
 		setResultDirectoryPath(resultDirectoryPath);
+
+		StringBuffer message = new StringBuffer();
+		message.append("Result Name : ").append(resultName).append("\n")
+				.append("Result Directory Path : ").append(resultDirectoryPath);
+		getSrm().getMainUI().displayMessage(message.toString());
 	}
 
 	public String getFileFullPath(String fileName) {
@@ -185,6 +194,9 @@ public class DataAccessManager {
 
 		if (!resultFolder.exists()) {
 			resultFolder.mkdir();
+			getSrm().getMainUI().displayMessage(
+					"Result Folder has been created.");
+			getSrm().getMainUI().displayMessage(getFileFullPath(null));
 		}
 	}
 
@@ -193,6 +205,8 @@ public class DataAccessManager {
 
 		if (dataFile.exists()) {
 			dropTable();
+			getSrm().getMainUI().displayMessage(
+					"Previous Result File has been deleted.");
 		}
 
 		createTable();
@@ -254,5 +268,92 @@ public class DataAccessManager {
 		}
 
 		return result;
+	}
+
+	public void saveResourceUsageLog(String resourceType) {
+		Connection conn = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		BufferedWriter bw = null;
+		Map<String, ServerConnector> serverMap = getSrm().getServerManager()
+				.getServerMap();
+
+		StringBuffer logFileNameBuffer = new StringBuffer();
+
+		logFileNameBuffer.append(resultName).append("_").append(resourceType)
+				.append("_usage.csv");
+
+		String logFilePath = getFileFullPath(logFileNameBuffer.toString());
+
+		StringBuffer sql = new StringBuffer();
+		sql.append("select seq\n");
+
+		for (String key : serverMap.keySet()) {
+			ServerConnector vo = serverMap.get(key);
+			String serverName = vo.getServerName();
+
+			sql.append(", nz(sum(switch(server_name = '").append(serverName)
+					.append("', percent)), 0) as ").append(serverName)
+					.append("\n");
+		}
+
+		sql.append("from resource_usage\n");
+		sql.append("where type = ?\n");
+		sql.append("group by seq");
+
+		try {
+			bw = new BufferedWriter(new FileWriter(new File(logFilePath)));
+			conn = getConnection();
+			pstmt = conn.prepareStatement(sql.toString());
+			pstmt.setString(1, resourceType);
+			rs = pstmt.executeQuery();
+
+			String[] title = new String[serverMap.size() + 1];
+			int index = 0;
+
+			title[index++] = "seq";
+
+			for (String key : serverMap.keySet()) {
+				ServerConnector vo = serverMap.get(key);
+
+				title[index++] = vo.getServerName();
+			}
+
+			bw.write(StringUtils.join(title, ","));
+			bw.write("\n");
+
+			while (rs.next()) {
+				Integer[] buf = new Integer[serverMap.size() + 1];
+
+				buf[index = 0] = rs.getInt("seq");
+
+				for (String key : serverMap.keySet()) {
+					ServerConnector vo = serverMap.get(key);
+					String serverName = vo.getServerName();
+
+					buf[++index] = rs.getInt(serverName);
+				}
+
+				bw.write(StringUtils.join(buf, ","));
+				bw.write("\n");
+			}
+
+			logFileNameBuffer.append(" has been created.");
+			getSrm().getMainUI().displayMessage(logFileNameBuffer.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				rs.close();
+				pstmt.close();
+				conn.close();
+				bw.close();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 }

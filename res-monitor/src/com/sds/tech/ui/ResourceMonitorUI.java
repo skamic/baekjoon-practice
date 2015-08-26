@@ -20,6 +20,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -50,6 +51,8 @@ public class ResourceMonitorUI extends JFrame {
 
 	private JPanel serverListPanel;
 	private JLabel statusBar;
+
+	private JTextArea logMessageArea;
 
 	public ResourceMonitorUI(ServerResourceMonitor srm) {
 		getContentPane().setName("");
@@ -82,6 +85,10 @@ public class ResourceMonitorUI extends JFrame {
 
 	public void setStatusBar(JLabel statusBar) {
 		this.statusBar = statusBar;
+	}
+
+	public JTextArea getLogMessageArea() {
+		return this.logMessageArea;
 	}
 
 	private void initUI() {
@@ -167,7 +174,25 @@ public class ResourceMonitorUI extends JFrame {
 	private void createLayout() {
 		getContentPane().add(createLeftPanel(), BorderLayout.WEST);
 		getContentPane().add(createRightPanel(), BorderLayout.CENTER);
+		getContentPane().add(createLogPanel(), BorderLayout.EAST);
 		getContentPane().add(createBottomPanel(), BorderLayout.SOUTH);
+	}
+
+	/**
+	 * @return
+	 */
+	private JPanel createLogPanel() {
+		JPanel logPanel = new JPanel();
+		logPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null, null,
+				null, null));
+		logPanel.setLayout(new BorderLayout(0, 0));
+
+		logMessageArea = new JTextArea();
+		logMessageArea.setText("** System Resource Monitor v1.0 **");
+		logMessageArea.setEditable(false);
+		logPanel.add(logMessageArea, BorderLayout.CENTER);
+
+		return logPanel;
 	}
 
 	/**
@@ -175,7 +200,7 @@ public class ResourceMonitorUI extends JFrame {
 	 */
 	private JPanel createLeftPanel() {
 		JPanel leftPanel = new JPanel();
-		leftPanel.setPreferredSize(new Dimension(300, 10));
+		leftPanel.setPreferredSize(new Dimension(250, 10));
 		leftPanel.setAutoscrolls(true);
 		leftPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
 				null, null, null));
@@ -252,24 +277,25 @@ public class ResourceMonitorUI extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				JButton source = (JButton) e.getSource();
 
+				if (getSrm().getServerManager().getServerMap().size() == 0) {
+					displayMessage("Please Add Server.");
+
+					return;
+				}
+
 				if (getSrm().isStarted()) {
 					getSrm().stopMonitoring();
 					source.setText("Start Monitoring");
+					displayMessage("Server Resource Monitoring Stop.");
 				} else {
 					getSrm().startMonitoring();
 					source.setText("Stop Monitoring");
+					displayMessage("Server Resource Monitoring Start.");
 				}
 			}
 		});
 
-		// JButton btnGranularity = new JButton("Set Granularity");
-		// btnGranularity.addActionListener(new ActionListener() {
-		//
-		// @Override
-		// public void actionPerformed(ActionEvent e) {
-		// displayMessage("Set Granularity");
-		// }
-		// });
+		buttonPanel.add(btnStartStop, "cell 0 0,grow");
 
 		JButton btnSaveImage = new JButton("Save as Image");
 		btnSaveImage.addActionListener(new ActionListener() {
@@ -278,15 +304,22 @@ public class ResourceMonitorUI extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				if (!srm.isStarted()) {
 					getSrm().saveGraphAsImage();
-					
-					displayMessage("CPU and Memory Graphs have successfully saved.");
 				}
 			}
 		});
+		buttonPanel.add(btnSaveImage, "cell 1 0,grow");
 
-		buttonPanel.add(btnStartStop, "cell 0 0,grow");
-		// buttonPanel.add(btnGranularity, "cell 1 0,grow");
-		buttonPanel.add(btnSaveImage, "cell 2 0,grow");
+		JButton btnSaveUsageLog = new JButton("Save Usage Log");
+		btnSaveUsageLog.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (!srm.isStarted()) {
+					getSrm().saveResourceUsageLog();
+				}
+			}
+		});
+		buttonPanel.add(btnSaveUsageLog, "cell 2 0,grow");
 
 		return buttonPanel;
 	}
@@ -490,7 +523,8 @@ public class ResourceMonitorUI extends JFrame {
 		return serverItemPanel;
 	}
 
-	public void displayMessage(String message) {
-		getStatusBar().setText(message);
+	public synchronized void displayMessage(String message) {
+		getLogMessageArea().append("\n");
+		getLogMessageArea().append(message);
 	}
 }

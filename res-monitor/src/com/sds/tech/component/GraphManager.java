@@ -72,6 +72,9 @@ public class GraphManager implements Runnable {
 
 		try {
 			ImageIO.write(image, "png", new File(imagePath));
+
+			imageNameBuffer.append(" has been created.");
+			getSrm().getMainUI().displayMessage(imageNameBuffer.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -81,9 +84,13 @@ public class GraphManager implements Runnable {
 	public void run() {
 		int sequence = 1;
 		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
+		StringBuffer message = new StringBuffer();
+
+		message.append(type.toUpperCase()).append(" GraphManager start.");
+		getSrm().getMainUI().displayMessage(message.toString());
 
 		initializeTimeSeriesMap();
-		
+
 		try {
 			Thread.sleep(1000);
 		} catch (InterruptedException e1) {

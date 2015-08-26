@@ -112,7 +112,7 @@ public class ResultSettingsPopup extends JFrame {
 				getParent().getSrm().saveResultSettings(
 						getResultName().getText(),
 						getResultDirectory().getText());
-				resetForm();
+//				resetForm();
 				setVisible(false);
 			}
 		});

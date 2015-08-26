@@ -49,11 +49,17 @@ public class ServerManager {
 		BufferedWriter bw = null;
 
 		try {
+			int serverCount = this.serverMap.size();
+
 			bw = new BufferedWriter(new FileWriter(serverListFile));
 
 			for (String serverId : this.serverMap.keySet()) {
 				bw.write(this.serverMap.get(serverId).toCsvFormatString());
 			}
+
+			StringBuffer message = new StringBuffer();
+			message.append(serverCount).append(" Servers have been saved.");
+			getSrm().getMainUI().displayMessage(message.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {

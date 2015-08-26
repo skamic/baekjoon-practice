@@ -118,6 +118,7 @@ public class ServerResourceMonitor {
 
 		try {
 			String buffer = null;
+			int serverCount = 0;
 
 			this.serverManager.initServerList();
 			br = new BufferedReader(new FileReader(serverListFile));
@@ -132,8 +133,13 @@ public class ServerResourceMonitor {
 							tokenizer.nextToken());
 
 					addServer(serverConnector);
+					serverCount++;
 				}
 			}
+
+			StringBuffer message = new StringBuffer();
+			message.append(serverCount).append(" Servers have been loaded.");
+			this.mainUI.displayMessage(message.toString());
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -154,7 +160,7 @@ public class ServerResourceMonitor {
 	public void startMonitoring() {
 		try {
 			setStarted(true);
-			
+
 			this.dataAccessManager.startMonitoring();
 			this.serverManager.startMonitoring();
 
@@ -190,4 +196,9 @@ public class ServerResourceMonitor {
 		this.memoryGraphManager.saveChartAsImage(imageName);
 	}
 
+	public void saveResourceUsageLog() {
+		this.dataAccessManager.createResultFolder();
+		this.dataAccessManager.saveResourceUsageLog("cpu");
+		this.dataAccessManager.saveResourceUsageLog("memory");
+	}
 }

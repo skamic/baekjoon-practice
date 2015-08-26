@@ -52,9 +52,17 @@ public class CpuUsageCollector implements Runnable {
 
 	@Override
 	public void run() {
+		StringBuffer message = new StringBuffer();
+		
+		message.append(serverName).append("'s CPU usage monitoring start.");
+		getSrm().getMainUI().displayMessage(message.toString());
+		
 		seq = 1;
 
 		executeCommand();
+		
+		message.delete(0, message.length()).append(serverName).append("'s CPU usage monitoring stop.");
+		getSrm().getMainUI().displayMessage(message.toString());
 	}
 
 	public void executeCommand() {
