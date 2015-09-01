@@ -9,24 +9,51 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.Session;
 import com.sds.tech.ServerResourceMonitor;
+import com.sds.tech.ui.ResourceMonitorUI;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class CpuUsageCollector.
+ */
 public class CpuUsageCollector implements Runnable {
-	private static final String COMMAND = "vmstat 5 10000";
 
+	/** The Constant CPU_USAGE_COMMAND. */
+	private static final String CPU_USAGE_COMMAND = "vmstat 5 10000";
+
+	/** The Constant RESOURCE_TYPE. */
 	private static final String RESOURCE_TYPE = "cpu";
 
+	/** The srm. */
 	private ServerResourceMonitor srm;
+
+	/** The server name. */
 	private String serverName;
+
+	/** The os type. */
 	private String osType;
+
+	/** The session. */
 	private Session session;
+
+	/** The channel. */
 	private Channel channel;
 
+	/** The seq. */
 	private int seq;
 
+	/**
+	 * Instantiates a new cpu usage collector.
+	 */
 	public CpuUsageCollector() {
 
 	}
 
+	/**
+	 * Instantiates a new cpu usage collector.
+	 *
+	 * @param serverConnector
+	 *            the server connector
+	 */
 	public CpuUsageCollector(ServerConnector serverConnector) {
 		this.srm = serverConnector.getSrm();
 		this.serverName = serverConnector.getServerName();
@@ -34,44 +61,38 @@ public class CpuUsageCollector implements Runnable {
 		this.session = serverConnector.getSession();
 	}
 
-	public ServerResourceMonitor getSrm() {
-		return srm;
-	}
-
-	public void setSrm(ServerResourceMonitor srm) {
-		this.srm = srm;
-	}
-
-	public Session getSession() {
-		return session;
-	}
-
-	public void setSession(Session session) {
-		this.session = session;
-	}
-
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Runnable#run()
+	 */
 	@Override
 	public void run() {
+		ResourceMonitorUI mainUI = srm.getMainUI();
 		StringBuffer message = new StringBuffer();
-		
+
 		message.append(serverName).append("'s CPU usage monitoring start.");
-		getSrm().getMainUI().displayMessage(message.toString());
-		
+		mainUI.displayMessage(message.toString());
+
 		seq = 1;
 
 		executeCommand();
-		
-		message.delete(0, message.length()).append(serverName).append("'s CPU usage monitoring stop.");
-		getSrm().getMainUI().displayMessage(message.toString());
+
+		message.delete(0, message.length());
+		message.append(serverName).append("'s CPU usage monitoring stop.");
+		mainUI.displayMessage(message.toString());
 	}
 
+	/**
+	 * Execute command.
+	 */
 	public void executeCommand() {
 		String buffer = null;
 		BufferedReader br = null;
 
 		try {
 			channel = session.openChannel("exec");
-			((ChannelExec) channel).setCommand(COMMAND);
+			((ChannelExec) channel).setCommand(CPU_USAGE_COMMAND);
 
 			channel.setInputStream(null);
 			((ChannelExec) channel).setErrStream(System.err);
@@ -105,23 +126,34 @@ public class CpuUsageCollector implements Runnable {
 			e.printStackTrace();
 		} finally {
 			try {
-				br.close();
+				if (br != null) {
+					br.close();
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
+	/**
+	 * Insert data.
+	 *
+	 * @param result
+	 *            the result
+	 */
 	public void insertData(String result) {
 		int percent = getCpuUsage(result);
-		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
+		DataAccessManager dataAccessManager = srm.getDataAccessManager();
 
 		dataAccessManager.insertData(seq++, serverName, RESOURCE_TYPE, percent);
 	}
 
 	/**
+	 * Gets the cpu usage.
+	 *
 	 * @param result
-	 * @return
+	 *            the result
+	 * @return the cpu usage
 	 */
 	private int getCpuUsage(String result) {
 		int percent = 100;

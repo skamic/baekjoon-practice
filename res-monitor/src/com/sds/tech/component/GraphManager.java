@@ -20,42 +20,97 @@ import org.jfree.data.time.TimeSeriesCollection;
 
 import com.sds.tech.ServerResourceMonitor;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class GraphManager.
+ */
 public class GraphManager implements Runnable {
+
+	/** The srm. */
 	private ServerResourceMonitor srm;
+
+	/** The type. */
 	private String type;
 
+	/** The chart. */
 	private Component chart;
+
+	/** The plot. */
 	private XYPlot plot;
+
+	/** The time series map. */
 	private Map<String, TimeSeries> timeSeriesMap;
 
+	/**
+	 * Instantiates a new graph manager.
+	 *
+	 * @param srm
+	 *            the srm
+	 * @param type
+	 *            the type
+	 */
 	public GraphManager(ServerResourceMonitor srm, String type) {
 		this.srm = srm;
 		this.type = type;
 		this.timeSeriesMap = new HashMap<String, TimeSeries>();
 	}
 
+	/**
+	 * Gets the srm.
+	 *
+	 * @return the srm
+	 */
 	public ServerResourceMonitor getSrm() {
 		return srm;
 	}
 
+	/**
+	 * Sets the srm.
+	 *
+	 * @param srm
+	 *            the new srm
+	 */
 	public void setSrm(ServerResourceMonitor srm) {
 		this.srm = srm;
 	}
 
+	/**
+	 * Sets the chart.
+	 *
+	 * @param graph
+	 *            the new chart
+	 */
 	public void setChart(Component graph) {
 		this.chart = graph;
 	}
 
+	/**
+	 * Gets the plot.
+	 *
+	 * @return the plot
+	 */
 	public XYPlot getPlot() {
 		return plot;
 	}
 
+	/**
+	 * Sets the plot.
+	 *
+	 * @param plot
+	 *            the new plot
+	 */
 	public void setPlot(XYPlot plot) {
 		this.plot = plot;
 	}
 
+	/**
+	 * Save chart as image.
+	 *
+	 * @param imageName
+	 *            the image name
+	 */
 	public void saveChartAsImage(String imageName) {
-		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
+		DataAccessManager dataAccessManager = srm.getDataAccessManager();
 		StringBuffer imageNameBuffer = new StringBuffer();
 
 		imageNameBuffer.append(imageName).append("_").append(this.type)
@@ -74,20 +129,25 @@ public class GraphManager implements Runnable {
 			ImageIO.write(image, "png", new File(imagePath));
 
 			imageNameBuffer.append(" has been created.");
-			getSrm().getMainUI().displayMessage(imageNameBuffer.toString());
+			srm.getMainUI().displayMessage(imageNameBuffer.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Runnable#run()
+	 */
 	@Override
 	public void run() {
 		int sequence = 1;
-		DataAccessManager dataAccessManager = getSrm().getDataAccessManager();
+		DataAccessManager dataAccessManager = srm.getDataAccessManager();
 		StringBuffer message = new StringBuffer();
 
 		message.append(type.toUpperCase()).append(" GraphManager start.");
-		getSrm().getMainUI().displayMessage(message.toString());
+		srm.getMainUI().displayMessage(message.toString());
 
 		initializeTimeSeriesMap();
 
@@ -130,6 +190,9 @@ public class GraphManager implements Runnable {
 		System.out.println(this.type + " : " + new Date());
 	}
 
+	/**
+	 * Initialize time series map.
+	 */
 	private void initializeTimeSeriesMap() {
 		Map<String, ServerConnector> serverMap = srm.getServerManager()
 				.getServerMap();
@@ -144,6 +207,14 @@ public class GraphManager implements Runnable {
 		}
 	}
 
+	/**
+	 * Toggle chart dataset.
+	 *
+	 * @param text
+	 *            the text
+	 * @param selected
+	 *            the selected
+	 */
 	public void toggleChartDataset(String text, boolean selected) {
 		int index = 0;
 

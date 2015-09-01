@@ -17,45 +17,103 @@ import org.apache.commons.lang.StringUtils;
 
 import com.sds.tech.ServerResourceMonitor;
 
+
+// TODO: Auto-generated Javadoc
+/**
+ * The Class DataAccessManager.
+ */
 public class DataAccessManager {
+	
+	/** The Constant SERVER_LIST_FILE_EXTENSION. */
 	public static final String SERVER_LIST_FILE_EXTENSION = "sl";
+	
+	/** The file mdb name. */
 	private final String FILE_MDB_NAME = "data.mdb";
+	
+	/** The drop table sql. */
 	private final String DROP_TABLE_SQL = "drop table resource_usage";
+	
+	/** The insert sql. */
 	private final String INSERT_SQL = "insert into resource_usage (seq, server_name, type, percent) values (?, ?, ?, ?)";
 
+	/** The srm. */
 	private ServerResourceMonitor srm;
 
+	/** The result name. */
 	private String resultName = "result";
+	
+	/** The result directory path. */
 	private String resultDirectoryPath = "c:\\Temp";
 
+	/**
+	 * Instantiates a new data access manager.
+	 *
+	 * @param srm the srm
+	 */
 	public DataAccessManager(ServerResourceMonitor srm) {
 		this.setSrm(srm);
 	}
 
+	/**
+	 * Gets the srm.
+	 *
+	 * @return the srm
+	 */
 	public ServerResourceMonitor getSrm() {
 		return srm;
 	}
 
+	/**
+	 * Sets the srm.
+	 *
+	 * @param srm the new srm
+	 */
 	public void setSrm(ServerResourceMonitor srm) {
 		this.srm = srm;
 	}
 
+	/**
+	 * Gets the result name.
+	 *
+	 * @return the result name
+	 */
 	public String getResultName() {
 		return resultName;
 	}
 
+	/**
+	 * Sets the result name.
+	 *
+	 * @param resultName the new result name
+	 */
 	public void setResultName(String resultName) {
 		this.resultName = resultName;
 	}
 
+	/**
+	 * Gets the result directory path.
+	 *
+	 * @return the result directory path
+	 */
 	public String getResultDirectoryPath() {
 		return resultDirectoryPath;
 	}
 
+	/**
+	 * Sets the result directory path.
+	 *
+	 * @param resultDirectoryPath the new result directory path
+	 */
 	public void setResultDirectoryPath(String resultDirectoryPath) {
 		this.resultDirectoryPath = resultDirectoryPath;
 	}
 
+	/**
+	 * Save result settings.
+	 *
+	 * @param resultName the result name
+	 * @param resultDirectoryPath the result directory path
+	 */
 	public void saveResultSettings(String resultName, String resultDirectoryPath) {
 		setResultName(resultName);
 		setResultDirectoryPath(resultDirectoryPath);
@@ -66,6 +124,12 @@ public class DataAccessManager {
 		getSrm().getMainUI().displayMessage(message.toString());
 	}
 
+	/**
+	 * Gets the file full path.
+	 *
+	 * @param fileName the file name
+	 * @return the file full path
+	 */
 	public String getFileFullPath(String fileName) {
 		StringBuffer path = new StringBuffer();
 
@@ -79,6 +143,12 @@ public class DataAccessManager {
 		return path.toString().replaceAll("\\\\", "/");
 	}
 
+	/**
+	 * Gets the connection.
+	 *
+	 * @return the connection
+	 * @throws IOException Signals that an I/O exception has occurred.
+	 */
 	public Connection getConnection() throws IOException {
 		Connection conn = null;
 		StringBuffer url = new StringBuffer();
@@ -98,6 +168,15 @@ public class DataAccessManager {
 		return conn;
 	}
 
+	/**
+	 * Insert data.
+	 *
+	 * @param seq the seq
+	 * @param serverName the server name
+	 * @param type the type
+	 * @param percent the percent
+	 * @return the int
+	 */
 	public int insertData(int seq, String serverName, String type, int percent) {
 		int result = 0;
 		Connection conn = null;
@@ -127,6 +206,13 @@ public class DataAccessManager {
 		return result;
 	}
 
+	/**
+	 * Select data.
+	 *
+	 * @param type the type
+	 * @param seq the seq
+	 * @return the map
+	 */
 	public Map<String, Integer> selectData(String type, int seq) {
 		Map<String, Integer> result = new HashMap<String, Integer>();
 		Map<String, ServerConnector> serverMap = getSrm().getServerManager()
@@ -184,11 +270,19 @@ public class DataAccessManager {
 		return result;
 	}
 
+	/**
+	 * Start monitoring.
+	 *
+	 * @throws Exception the exception
+	 */
 	public void startMonitoring() throws Exception {
 		createResultFolder();
 		createDataFile();
 	}
 
+	/**
+	 * Creates the result folder.
+	 */
 	public void createResultFolder() {
 		File resultFolder = new File(getFileFullPath(null));
 
@@ -200,6 +294,11 @@ public class DataAccessManager {
 		}
 	}
 
+	/**
+	 * Creates the data file.
+	 *
+	 * @throws Exception the exception
+	 */
 	private void createDataFile() throws Exception {
 		File dataFile = new File(getFileFullPath(FILE_MDB_NAME));
 
@@ -212,6 +311,12 @@ public class DataAccessManager {
 		createTable();
 	}
 
+	/**
+	 * Drop table.
+	 *
+	 * @return the int
+	 * @throws Exception the exception
+	 */
 	private int dropTable() throws Exception {
 		int result = 0;
 
@@ -238,6 +343,12 @@ public class DataAccessManager {
 		return result;
 	}
 
+	/**
+	 * Creates the table.
+	 *
+	 * @return the int
+	 * @throws Exception the exception
+	 */
 	public int createTable() throws Exception {
 		int result = 0;
 
@@ -270,6 +381,11 @@ public class DataAccessManager {
 		return result;
 	}
 
+	/**
+	 * Save resource usage log.
+	 *
+	 * @param resourceType the resource type
+	 */
 	public void saveResourceUsageLog(String resourceType) {
 		Connection conn = null;
 		PreparedStatement pstmt = null;

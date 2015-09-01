@@ -41,19 +41,39 @@ import com.sds.tech.component.ServerConnector;
 import com.sds.tech.ui.popup.AddNewServerPopup;
 import com.sds.tech.ui.popup.ResultSettingsPopup;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class ResourceMonitorUI.
+ */
 public class ResourceMonitorUI extends JFrame {
+
+	/** The Constant serialVersionUID. */
 	private static final long serialVersionUID = -8623816897416048151L;
 
+	/** The srm. */
 	private ServerResourceMonitor srm;
 
+	/** The add new server popup. */
 	private AddNewServerPopup addNewServerPopup;
+
+	/** The result settings popup. */
 	private ResultSettingsPopup resultSettingsPopup;
 
+	/** The server list panel. */
 	private JPanel serverListPanel;
+
+	/** The status bar. */
 	private JLabel statusBar;
 
+	/** The log message area. */
 	private JTextArea logMessageArea;
 
+	/**
+	 * Instantiates a new resource monitor ui.
+	 *
+	 * @param srm
+	 *            the srm
+	 */
 	public ResourceMonitorUI(ServerResourceMonitor srm) {
 		getContentPane().setName("");
 		this.srm = srm;
@@ -71,26 +91,56 @@ public class ResourceMonitorUI extends JFrame {
 		this.resultSettingsPopup = new ResultSettingsPopup(this);
 	}
 
+	/**
+	 * Gets the srm.
+	 *
+	 * @return the srm
+	 */
 	public ServerResourceMonitor getSrm() {
 		return srm;
 	}
 
+	/**
+	 * Sets the srm.
+	 *
+	 * @param srm
+	 *            the new srm
+	 */
 	public void setSrm(ServerResourceMonitor srm) {
 		this.srm = srm;
 	}
 
+	/**
+	 * Gets the status bar.
+	 *
+	 * @return the status bar
+	 */
 	public JLabel getStatusBar() {
 		return statusBar;
 	}
 
+	/**
+	 * Sets the status bar.
+	 *
+	 * @param statusBar
+	 *            the new status bar
+	 */
 	public void setStatusBar(JLabel statusBar) {
 		this.statusBar = statusBar;
 	}
 
+	/**
+	 * Gets the log message area.
+	 *
+	 * @return the log message area
+	 */
 	public JTextArea getLogMessageArea() {
 		return this.logMessageArea;
 	}
 
+	/**
+	 * Inits the ui.
+	 */
 	private void initUI() {
 		setTitle("System Resource Monitor");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -99,6 +149,9 @@ public class ResourceMonitorUI extends JFrame {
 		createLayout();
 	}
 
+	/**
+	 * Creates the menu bar.
+	 */
 	private void createMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
 
@@ -169,7 +222,7 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * 
+	 * Creates the layout.
 	 */
 	private void createLayout() {
 		getContentPane().add(createLeftPanel(), BorderLayout.WEST);
@@ -179,7 +232,9 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * @return
+	 * Creates the log panel.
+	 *
+	 * @return the j panel
 	 */
 	private JPanel createLogPanel() {
 		JPanel logPanel = new JPanel();
@@ -196,7 +251,9 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * @return
+	 * Creates the left panel.
+	 *
+	 * @return the j panel
 	 */
 	private JPanel createLeftPanel() {
 		JPanel leftPanel = new JPanel();
@@ -216,7 +273,7 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * 
+	 * Creates the left server list panel.
 	 */
 	private void createLeftServerListPanel() {
 		serverListPanel = new JPanel();
@@ -238,11 +295,12 @@ public class ResourceMonitorUI extends JFrame {
 		});
 		serverListPanel.setLayout(new MigLayout("", "[left]", "[top][]"));
 		serverListPanel.add(btnAddServer, "cell 0 0,alignx left,growy,wrap");
-
 	}
 
 	/**
-	 * @return
+	 * Creates the right panel.
+	 *
+	 * @return the j panel
 	 */
 	private JPanel createRightPanel() {
 		JPanel rightPanel = new JPanel();
@@ -259,8 +317,9 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * 
-	 * @return
+	 * Creates the right button panel.
+	 *
+	 * @return the j panel
 	 */
 	private JPanel createRightButtonPanel() {
 		JPanel buttonPanel = new JPanel();
@@ -325,11 +384,13 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * @return
+	 * Creates the right graph panel.
+	 *
+	 * @return the j panel
 	 */
 	private JPanel createRightGraphPanel() {
-		GraphManager cpuGraphManager = getSrm().getCpuGraphManager();
-		GraphManager memoryGraphManager = getSrm().getMemoryGraphManager();
+		GraphManager cpuGraphManager = srm.getCpuGraphManager();
+		GraphManager memoryGraphManager = srm.getMemoryGraphManager();
 		JPanel graphPanel = new JPanel();
 
 		graphPanel.setBorder(new SoftBevelBorder(BevelBorder.LOWERED, null,
@@ -349,8 +410,9 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * @return
-	 * 
+	 * Creates the cpu usage panel.
+	 *
+	 * @return the j panel
 	 */
 	private JPanel createCpuUsagePanel() {
 		JPanel cpuUsagePanel = new JPanel();
@@ -392,8 +454,9 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * @return
-	 * 
+	 * Creates the memory usage panel.
+	 *
+	 * @return the j panel
 	 */
 	private JPanel createMemoryUsagePanel() {
 		JPanel memoryUsagePanel = new JPanel();
@@ -435,7 +498,9 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * @return
+	 * Creates the bottom panel.
+	 *
+	 * @return the j panel
 	 */
 	private JPanel createBottomPanel() {
 		JPanel bottomPanel = new JPanel();
@@ -452,12 +517,10 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
-	 * 
-	 * @param serverName
-	 * @param serverIP
-	 * @param serverPort
-	 * @param userId
-	 * @param password
+	 * Adds the server.
+	 *
+	 * @param server
+	 *            the server
 	 */
 	public void addServer(ServerConnector server) {
 		serverListPanel.add(
@@ -468,9 +531,13 @@ public class ResourceMonitorUI extends JFrame {
 	}
 
 	/**
+	 * Creates the server item panel.
+	 *
 	 * @param serverName
+	 *            the server name
 	 * @param serverId
-	 * @return
+	 *            the server id
+	 * @return the j panel
 	 */
 	private JPanel createServerItemPanel(String serverName, String serverId) {
 		JPanel serverItemPanel = new JPanel();
@@ -517,12 +584,33 @@ public class ResourceMonitorUI extends JFrame {
 					serverListPanel.repaint();
 				}
 			}
+
 		});
 		serverItemPanel.add(btnDelete);
 
 		return serverItemPanel;
 	}
 
+	/**
+	 * Removes the all servers.
+	 */
+	public void removeAllServers() {
+		int compCount = serverListPanel.getComponentCount();
+
+		for (int i = compCount - 1; i > 0; --i) {
+			serverListPanel.remove(i);
+		}
+
+		serverListPanel.revalidate();
+		serverListPanel.repaint();
+	}
+
+	/**
+	 * Display message.
+	 *
+	 * @param message
+	 *            the message
+	 */
 	public synchronized void displayMessage(String message) {
 		getLogMessageArea().append("\n");
 		getLogMessageArea().append(message);

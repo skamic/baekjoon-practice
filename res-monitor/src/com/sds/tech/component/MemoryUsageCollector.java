@@ -1,11 +1,5 @@
 package com.sds.tech.component;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.Session;
 import com.sds.tech.ServerResourceMonitor;
 
@@ -28,7 +22,6 @@ public class MemoryUsageCollector implements Runnable {
 	private String serverName;
 	private String osType;
 	private Session session;
-	private Channel channel;
 
 	private int seq;
 
@@ -87,84 +80,38 @@ public class MemoryUsageCollector implements Runnable {
 			memFreeFactor = 8 / 1024;
 		}
 
-		memTotal = getMemoryTotal(memTotalCommand);
-		executeCommand(memFreeCommand, memTotal, memFreeFactor);
-		
-		message.delete(0, message.length()).append(serverName).append("'s Memory usage monitoring stop.");
+		memTotal = Long.parseLong(CommandExecutor.execute(session,
+				memTotalCommand));
+		checkCurrentMemoryUsage(memFreeCommand, memTotal, memFreeFactor);
+
+		message.delete(0, message.length()).append(serverName)
+				.append("'s Memory usage monitoring stop.");
 		getSrm().getMainUI().displayMessage(message.toString());
 	}
 
-	private long getMemoryTotal(final String MEM_TOTAL_COMMAND) {
-		long memTotal = 0;
-		String buffer = null;
-		BufferedReader br = null;
-
-		try {
-			channel = session.openChannel("exec");
-			((ChannelExec) channel).setCommand(MEM_TOTAL_COMMAND);
-
-			channel.setInputStream(null);
-			((ChannelExec) channel).setErrStream(System.err);
-
-			br = new BufferedReader(new InputStreamReader(
-					channel.getInputStream()));
-
-			channel.connect();
-
-			while ((buffer = br.readLine()) != null) {
-				memTotal = Long.parseLong(buffer);
-			}
-
-			channel.disconnect();
-
-			br.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				br.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		return memTotal;
-	}
-
-	private void executeCommand(final String MEM_FREE_COMMAND,
-			final long memTotal, float memFreeFactor) {
+	private void checkCurrentMemoryUsage(final String MEM_FREE_COMMAND,
+			final long memTotal, final float memFreeFactor) {
 		long memFree = 0;
 		double percent = 0;
-		String buffer = null;
-		BufferedReader br = null;
+		long startTime, elapsedTime;
 
-		try {
-			while (srm.isStarted()) {
-				channel = session.openChannel("exec");
-				((ChannelExec) channel).setCommand(MEM_FREE_COMMAND);
+		while (srm.isStarted()) {
+			startTime = System.currentTimeMillis();
 
-				channel.setInputStream(null);
-				((ChannelExec) channel).setErrStream(System.err);
+			memFree = Long.parseLong(CommandExecutor.execute(session,
+					MEM_FREE_COMMAND));
+			percent = Math
+					.round(((memTotal - memFree * memFreeFactor) / memTotal) * 100);
 
-				br = new BufferedReader(new InputStreamReader(
-						channel.getInputStream()));
+			insertData((int) percent);
 
-				channel.connect();
+			elapsedTime = System.currentTimeMillis() - startTime;
 
-				while ((buffer = br.readLine()) != null) {
-					memFree = Long.parseLong(buffer);
-					percent = Math
-							.round(((memTotal - memFree * memFreeFactor) / memTotal) * 100);
-					insertData((int) percent);
-				}
-
-				channel.disconnect();
-				br.close();
-
-				Thread.sleep(5000);
+			try {
+				Thread.sleep(5000 - elapsedTime);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 

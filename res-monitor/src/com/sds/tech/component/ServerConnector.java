@@ -1,11 +1,5 @@
 package com.sds.tech.component;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
@@ -189,11 +183,12 @@ public class ServerConnector {
 			});
 
 			session.connect();
+			
 			message.append(serverIP).append(":").append(serverPort)
 					.append(" connected.");
 			getSrm().getMainUI().displayMessage(message.toString());
 
-			checkOsType();
+			osType = CommandExecutor.execute(session, OS_TYPE_COMMAND);
 
 			cpuUsageCollector = new CpuUsageCollector(this);
 			memoryUsageCollector = new MemoryUsageCollector(this);
@@ -207,39 +202,6 @@ public class ServerConnector {
 			memoryUsageCollectorThread.start();
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-	}
-
-	private void checkOsType() {
-		Channel channel = null;
-		String buffer = null;
-		BufferedReader br = null;
-
-		try {
-			channel = session.openChannel("exec");
-			((ChannelExec) channel).setCommand(OS_TYPE_COMMAND);
-
-			channel.setInputStream(null);
-			((ChannelExec) channel).setErrStream(System.err);
-
-			br = new BufferedReader(new InputStreamReader(
-					channel.getInputStream()));
-
-			channel.connect();
-
-			while ((buffer = br.readLine()) != null) {
-				osType = new String(buffer);
-			}
-
-			channel.disconnect();
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				br.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 
