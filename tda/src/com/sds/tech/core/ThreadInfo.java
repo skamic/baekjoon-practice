@@ -1,4 +1,4 @@
-package com.samsung.sds.core;
+package com.sds.tech.core;
 
 public class ThreadInfo {
 	private String name;
@@ -166,6 +166,13 @@ public class ThreadInfo {
 	 */
 	public void setStackInfo(StringBuffer stackInfo) {
 		this.stackInfo = stackInfo;
+	}
+
+	@Override
+	public String toString() {
+		return "ThreadInfo [name=" + name + ", priority=" + priority
+				+ ", tidHex=" + tidHex + ", nidHex=" + nidHex + ", isDaemon="
+				+ isDaemon + "]";
 	}
 
 }
